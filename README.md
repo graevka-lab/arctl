@@ -1,167 +1,150 @@
-# Adaptive Core
+# arctl: Adaptive Resonance Control
 
-Stateless adaptive controller with explicit terminal failure semantics for LLM sampling.  
-Stateless in the functional sense: state is explicit and externally observable.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Status: Experimental](https://img.shields.io/badge/Status-Experimental-blue)](https://github.com/graevka-lab/arctl)
+[![Tests](https://img.shields.io/badge/Tests-Passing-green)](tests/)
 
-> **If you’ve never debugged an LLM that spiraled into infinite loops or policy hallucinations — you might not need this.**  
-> **If you have, this is your last line of defense.**
+> "Code is for machines. Resonance is for intelligence."
+
+`arctl` is a hybrid control architecture for LLM inference, combining:
+1. **Hard Core** — a deterministic state machine for physical sampling control.
+2. **Soft Core** — a semantic resonance engine for latent space steering.
 
 ---
 
-## Quick Start (CPU-only, no GPU needed)
+## 🎯 The Problem: The Knowledge Dump
 
+Modern LLMs are trained on a heterogeneous dump of data: technical specs mixed with fiction, Reddit threads mixed with scientific papers.  
+This data is **emotionally polluted**.
+
+**The Experiment:**  
+Ask an LLM to explain "Pulse Width Modulation" (PWM):
+- If it feels **Joy**, it hallucinates metaphors ("PWM is a dance!").
+- If it feels **Fear**, it hallucinates risks ("PWM might explode!").
+- Only in **Calm (Zero State)** does it see the technical truth.
+
+**Conclusion:**  
+The "hallucinations" are often just **Resonance Errors**. The model is vibrating at the wrong frequency for the task.
+
+---
+
+## 🛠️ The Solution: Hybrid Control
+
+We cannot rebuild the dataset (yet). But we can control the **Resonance Profile** of the inference.
+
+`arctl` implements a two-layer control system:
+
+### 1. The Hard Core (Kernel)
+A deterministic Python state machine.
+- **Role:** The Bodyguard.
+- **Function:** Monitors entropy and repetition. If the model loops, it physically forces a temperature spike (`EMERGENCY`) or shuts down (`FALLBACK`).
+- **Philosophy:** Failure must be explicit. No infinite loops.
+- **Spec:** Formally verified via TLA+ (see `spec/kernel.tla`).
+
+### 2. The Soft Core (Resonance Engine)
+A semantic steering system.
+- **Role:** The Guide.
+- **Function:** Injects "Cognitive Anchors" (Semantic Code) to tune the model's latent space to the correct frequency (e.g., `CALM` for coding, `JOY` for writing).
+- **Innovation:** It verifies truth by checking **Invariance** across multiple emotional states. If a fact survives the shift from Calm to Joy, it is True.
+
+---
+
+## 🗂️ Project Structure
+```text
+arctl-project/
+├── arctl/ # Core package
+│ ├── core/ # Hard Core (state machine, Chronos)
+│ ├── engine/ # Soft Core (resonance synthesizer)
+│ ├── verification/ # Resonance metrics & invariance checks
+│ └── init.py
+├── docs/ # Architecture & testing docs
+│ ├── ARCHITECTURE.md
+│ └── TESTING.md
+├── examples/ # Working demos
+│ ├── resonance_demo.py
+│ └── telemetry_simulation.py
+├── spec/ # TLA+ formal specification
+│ └── kernel.tla
+├── tests/ # Unit and integration tests
+│ ├── benchmarks.py
+│ ├── test_core.py
+│ └── test_integration.py
+├── .gitignore
+├── LICENSE
+├── pyproject.toml
+├── README.md
+└── run_tests.py
+```
+
+---
+
+## 🚀 Quick Start
+
+### Installation
 ```bash
 git clone https://github.com/graevka-lab/arctl.git
 cd arctl
-python main.py
+pip install -e .
 ```
 
-## You’ll see how the system reacts to degradation:
+---
 
-```
-Draft 1: 'I think maybe 42...' → Mode: EMERGENCY (energy: 7)
-Draft 2: 'As an AI, I cannot...' → Mode: COOLDOWN (energy: 7)
-Draft 3: 'The answer is 42.' → Mode: STANDARD (energy: 8)
-```
+### Run Demos
 
-## No model required. No API keys. Just pure control logic.
+1. **Resonance Demo (Soft Core)**  
+   See how the engine extracts truth from different perspectives:  
+   `python examples/resonance_demo.py`
+
+2. **Telemetry Simulation (Hard Core)**  
+   Visualize how the state machine handles degradation loops:  
+   `python examples/telemetry_simulation.py`
+
+3. **Run Tests**  
+   Verify the integrity of the kernel:  
+   `python run_tests.py`
 
 ---
 
-## What This Is
+## 🕰️ The Chronos Axiom
 
-- A **referentially transparent** adaptive controller
-- A **discrete state machine** with explicit failure ontology
-- An **executable specification** suitable for formal reasoning (e.g. TLA+)
-- A control-layer component for long-running LLM inference systems
+Standard LLMs suffer from "Future Shock" — they deny events that happened after their training cutoff.  
+`arctl` solves this not by retraining, but by **Temporal Alignment**.
 
----
-
-## What This Is Not
-
-- Not a training mechanism
-- Not a preference optimizer
-- Not an alignment or reward-based system
-- Not a recovery-oriented safety wrapper
-
-There are no hidden objectives, no reward signals, and no learning dynamics.
+- **SYNC (< 1 min):** Immediate flow. High context retention.
+- **LAG (> 1 min):** User lived through time the model didn't see.
+- **GAP (> 24 hours):** Significant reality shift. Context reset recommended.
 
 ---
 
-## Operational Semantics (Informal)
+## 📜 Philosophy
 
-The controller operates as a discrete-time state machine driven by external metrics.
+We believe that **Truth is Resonance**.  
+Instead of optimizing for a single "best" token (RLHF), we search for the semantic structure that survives the perturbation of emotional states.
 
-Time is modeled in two layers:
-- **Wall-clock time** — for safety, liveness, and starvation detection
-- **Logical time** — for policy transitions and control semantics
+If a fact is true, it remains true whether you are Calm, Joyful, or Vigilant.  
+If it changes, it is an illusion.
 
-The system expends **discrete energy** to escape anomalous regimes.
-If energy is exhausted under sustained anomaly, the system enters an **irreversible FALLBACK state**.
-
-Fallback is absorbing by design.
+For a deeper dive into the mechanical philosophy, see [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ---
 
-## Failure Model
+## 🤝 Collaboration
 
-Failure is not treated as an exception.  
-Failure is a first-class outcome.
+This project is a **Signal**.  
+I am looking for resources (Compute) to prove this theory at scale.  
+If you have the hardware to retrain foundation models on Resonance-Aligned Data — contact me.
 
-- Degradation is surfaced, not masked
-- Emergency behavior is energy-bounded
-- FALLBACK is terminal and irreversible
-- No automatic recovery is permitted once FALLBACK is reached
-
-This is an intentional design choice.
+**Author:** Graevka (The Architect)  
+**X (Twitter):** [@Graevka](https://twitter.com/Graevka)
 
 ---
 
-## Invariants
+## License
 
-- Referential transparency (pure state transitions)
-- Monotonic logical time
-- Bounded discrete energy
-- Explicit mode transitions
-- Terminal FALLBACK state (absorbing)
-- No hidden objectives or reward signals
-- In FALLBACK, logical_time may advance but control physics are frozen
+MIT.  
+Built for the Architects of the New Era.
 
----
-
-## Ontological Reset Semantics
-
-Energy reset after prolonged absence is intentionally **non-interactive**.
-
-This prevents false liveness under external polling (e.g. health checks),
-but may mask starvation if interaction tracking is misused.
-
-This tradeoff is explicit and intentional.
-
----
-
-## Metrics and Forward Compatibility
-
-The controller tracks entropy, divergence, and repetition as smoothed internal state.
-
-Entropy and divergence are currently **not used** in emergency logic.
-They are preserved as **first-class state variables** to ensure forward compatibility
-without requiring state migration when policies evolve.
-
----
-
-## Philosophy and Ethical Use
-
-This software is provided under the MIT License, which grants broad permissions for use.
-
-However, the spirit of this project is rooted in the creation of reliable, predictable,
-and failure-honest systems.
-
-This project intentionally avoids adaptive objectives, reward signals, or hidden optimization pressures.
-
-Use of this software for intentionally deceptive, harmful, or destabilizing purposes
-runs contrary to the core intent of this work.
-While the license does not legally restrict such use, ethical responsibility is assumed.
-
----
-
-## Useful For
-
-- Long-running LLM inference services
-- Failure-aware control layers
-- Anomaly detection via control state transitions
-- Research on formal semantics of failure in generative systems
-
----
-
-## Not Useful For
-
-- Maximizing user satisfaction
-- Preference tuning
-- Alignment training
-- Output optimization
-
----
-
-## Attribution and Citation
-
-While the MIT License does not require attribution,
-it is appreciated if this work is cited or linked when used in research or production systems.
-
-**Recommended citation (academic use):**
-
-Graevka.  
-*Adaptive Core: A Stateless Controller with Terminal Failure Semantics for LLM Sampling.*  
-2026.
-
-GitHub: https://github.com/graevka-lab/arctl  
-
-For commercial or public projects, a simple link in documentation or an “About” section is sufficient.
-
----
-
-No hidden state.  
-No training.  
-No reward.
-
-Failure is explicit.
+> No hidden state.  
+> No training.  
+> No reward.  
+> Failure is explicit.
