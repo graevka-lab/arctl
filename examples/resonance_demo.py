@@ -8,17 +8,17 @@ import os
 
 # --- PATH SETUP (Robust) ---
 from pathlib import Path
-# Получаем абсолютный путь к папке, где лежит этот скрипт (examples)
+# Get absolute path to the examples directory
 current_dir = Path(__file__).parent
-# Поднимаемся на один уровень вверх (в корень репозитория)
+# Navigate up one level to the project root
 project_root = current_dir.parent
 
-# Добавляем корень в sys.path, чтобы Python видел папку 'arctl'
+# Add project root to sys.path so Python can find the 'arctl' package
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 # --------------------------
 
-# Теперь Python видит пакет 'arctl'
+# Now Python can see the 'arctl' package
 from arctl.engine.synthesizer import ResonanceSynthesizer
 from arctl.verification.metrics import ResonanceVerifier
 
@@ -65,6 +65,17 @@ def main():
     print("\n=== PERSPECTIVES ===")
     for mode, response in multi_result["responses"].items():
         print(f"\n[{mode.upper()}]: {response}")
+
+if __name__ == "__main__":
+    try:
+        main()
+    except ImportError as e:
+        print(f"❌ Import Error: {e}")
+        print("Make sure all dependencies are installed: pip install sentence-transformers numpy matplotlib")
+        exit(1)
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        exit(1)
 
 if __name__ == "__main__":
     main()

@@ -2,7 +2,12 @@
 Resonance Synthesizer with Multi-Pass Generation capability.
 """
 
-from typing import Dict, Any, Protocol
+from typing import Dict, Any
+try:
+    from typing import Protocol
+except ImportError:
+    from typing_extensions import Protocol
+
 from arctl.core.anchors import blend_anchors
 from arctl.core.profiles import get_profile
 

@@ -4,6 +4,7 @@ Synchronizes the discrete Model Cursor with the continuous User Cursor.
 """
 
 from datetime import datetime
+from typing import Tuple
 from .states import TimeState
 
 class Chronos:
@@ -13,7 +14,7 @@ class Chronos:
     """
     
     @staticmethod
-    def sync(prev_ts: float, current_ts: float) -> tuple[TimeState, str]:
+    def sync(prev_ts: float, current_ts: float) -> Tuple[TimeState, str]:
         """
         Calculates the time gap and generates a context update signal.
         """

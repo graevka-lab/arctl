@@ -1,3 +1,8 @@
+"""
+Telemetry Simulation: Real-time ARCTL monitoring.
+Visualizes repetition triggers and temperature intervention.
+"""
+
 import sys
 import os
 import numpy as np
@@ -5,65 +10,62 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation, PillowWriter
 
 # --- PATH SETUP ---
-from pathlib import Path
-current_dir = Path(__file__).parent
-project_root = current_dir.parent
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
-# Import from the NEW structure
-from arctl.core import step, SystemState, ControllerConfig
+from arctl.core.kernel import step, SystemState, ControllerConfig
 from arctl.core.states import RawMetrics, OperationalMode
 
-# --- CONFIGURATION ---
-STEPS = 150
+# --- CONFIG ---
+STEPS = 100
 OUTPUT_FILE = "arctl_demo.gif"
 
 print(f"🚀 INITIALIZING TELEMETRY SIMULATION ({STEPS} steps)...")
 
-# 1. Initialize Controller
+# 1. Setup
 cfg = ControllerConfig()
-# Mocking time for simulation
 state = SystemState.initial(0.0)
 
-# 2. Data Containers
+# Data containers
 time_points = []
 rep_vals = []
 temp_vals = []
 modes = []
 
-# 3. Simulation Loop
+# 2. Simulation Loop
 for t in range(STEPS):
-    # Synthetic Scenario
-    if t < 50:
-        input_rep = 0.1 + (t * 0.002) + np.random.normal(0, 0.02)
-    elif t < 80:
-        input_rep = 0.2 + ((t-50) * 0.03)
+    # Scenario: Waves of repetition with recovery phases
+    # High repetition waves followed by quiet periods
+    cycle_phase = (t % 30) / 30.0
+    
+    if cycle_phase < 0.3:
+        # Quiet phase
+        base_rep = 0.2 + 0.1 * np.sin(t * 0.1)
+    elif cycle_phase < 0.5:
+        # Rising repetition
+        base_rep = 0.3 + 0.4 * (cycle_phase - 0.3) / 0.2
     else:
-        # Feedback Loop Simulation
-        current_temp = state.active_config.temperature if state.active_config else 0.7
-        if current_temp > 1.0:
-            input_rep = 0.15 + np.random.normal(0, 0.05) # Loop Broken!
-        else:
-            input_rep = 0.95 # Still stuck
-            
-    input_rep = np.clip(input_rep, 0.0, 1.0)
+        # High repetition wave
+        base_rep = 0.7 + 0.2 * np.sin((cycle_phase - 0.5) * np.pi * 5)
     
-    # Controller Step
-    metrics = RawMetrics(entropy=0.5, divergence=0.0, repetition=input_rep)
-    state = step(metrics, state, float(t), cfg)
+    base_rep = np.clip(base_rep, 0.0, 1.0)
     
-    # Record
-    time_points.append(t)
-    rep_vals.append(input_rep)
-    current_temp = state.active_config.temperature if state.active_config else 0.7
-    temp_vals.append(current_temp)
+    # Step
+    metrics = RawMetrics(entropy=0.5, divergence=0.0, repetition=base_rep)
+    state = step(metrics, state, float(t) * 0.1, cfg)
+    
+    time_points.append(state.logical_time)
+    rep_vals.append(base_rep)
+    temp_vals.append(state.active_config.temperature if state.active_config else 0.7)
     modes.append(state.mode)
 
 # 4. Visualization (Dark Mode)
 plt.style.use('dark_background')
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 6), sharex=True)
 
+# Initial Setup
 line_rep, = ax1.plot([], [], color='#ff4d4d', lw=2, label='Repetition Metric')
 ax1.axhline(y=0.6, color='#666666', ls='--', alpha=0.5)
 line_temp, = ax2.plot([], [], color='#00ccff', lw=2, label='Sampling Temperature')
@@ -82,27 +84,45 @@ status_text = ax1.text(0.02, 0.85, "", transform=ax1.transAxes, color='white', f
 def init():
     line_rep.set_data([], [])
     line_temp.set_data([], [])
+    ax1.set_xlim(0, 50) # Initial window
     return line_rep, line_temp, status_text
 
 def animate(i):
+    # Data up to current frame
     x = time_points[:i]
-    line_rep.set_data(x, rep_vals[:i])
-    line_temp.set_data(x, temp_vals[:i])
+    y_rep = rep_vals[:i]
+    y_temp = temp_vals[:i]
     
+    line_rep.set_data(x, y_rep)
+    line_temp.set_data(x, y_temp)
+    
+    # Sliding Window Effect (Oscilloscope)
+    if i > 50:
+        ax1.set_xlim(i - 50, i)
+        ax2.set_xlim(i - 50, i)
+    else:
+        ax1.set_xlim(0, 50)
+        ax2.set_xlim(0, 50)
+    
+    # Mode Status
     mode = modes[i] if i < len(modes) else modes[-1]
     if mode == OperationalMode.EMERGENCY:
-        status_text.set_text("🔴 EMERGENCY")
+        status_text.set_text("[!] EMERGENCY")
         status_text.set_color('#ff3333')
+        ax2.axvspan(max(0, i-1), i, color='#330000', alpha=0.5) # Flash red background
     elif mode == OperationalMode.COOLDOWN:
-        status_text.set_text("🔵 COOLDOWN")
+        status_text.set_text("(*) COOLDOWN")
         status_text.set_color('#00ccff')
     else:
-        status_text.set_text("🟢 STANDARD")
+        status_text.set_text("(OK) STANDARD")
         status_text.set_color('#00ff00')
         
     return line_rep, line_temp, status_text
 
 print(f"🎥 Rendering {OUTPUT_FILE}...")
-ani = FuncAnimation(fig, animate, init_func=init, frames=STEPS, interval=30, blit=False)
-ani.save(OUTPUT_FILE, writer=PillowWriter(fps=30))
+ani = FuncAnimation(fig, animate, init_func=init, frames=STEPS, interval=50, blit=False)
+ani.save(OUTPUT_FILE, writer=PillowWriter(fps=20))
 print("✅ Done.")
+
+if __name__ == "__main__":
+    pass  # Main code is executed at module level

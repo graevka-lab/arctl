@@ -28,23 +28,34 @@ class ResonanceVerifier:
         return [s.strip() for s in sentences if len(s.strip()) > 10][:3]  # Top 3 substantial claims
     
     def _calculate_pairwise_similarity(self, embeddings1: np.ndarray, embeddings2: np.ndarray) -> float:
+        """Calculate cosine similarity between two sets of embeddings with proper error handling."""
         if len(embeddings1) == 0 or len(embeddings2) == 0:
             return 0.0
+        
         similarities = []
         for emb1 in embeddings1:
             for emb2 in embeddings2:
                 norm1 = np.linalg.norm(emb1)
                 norm2 = np.linalg.norm(emb2)
-                if norm1 == 0 or norm2 == 0:
+                # Handle zero-vector case
+                if norm1 < 1e-10 or norm2 < 1e-10:
                     sim = 0.0
                 else:
-                    sim = np.dot(emb1, emb2) / (norm1 * norm2)
+                    sim = float(np.dot(emb1, emb2) / (norm1 * norm2))
+                    # Clamp to [-1, 1] to handle floating point errors
+                    sim = max(-1.0, min(1.0, sim))
                 similarities.append(sim)
-        return np.mean(similarities) if similarities else 0.0
+        
+        return float(np.mean(similarities)) if similarities else 0.0
     
     def verify(self, responses: Dict[str, str]) -> Dict[str, Any]:
+        """Verify semantic stability across different response modes."""
         if not self.embedder or len(responses) < 2:
-            return {"resonance_score": 0.0, "is_stable": False, "error": "Insufficient data or missing libs"}
+            return {
+                "resonance_score": 0.0,
+                "is_stable": False,
+                "error": "Insufficient data or missing libs"
+            }
         
         key_claims = {}
         for mode, response in responses.items():
@@ -68,8 +79,8 @@ class ResonanceVerifier:
                 )
                 similarities_list.append(sim)
         
-        mean_similarity = np.mean(similarities_list) if similarities_list else 0.0
-        variance = np.var(similarities_list) if len(similarities_list) > 1 else 0.0
+        mean_similarity = float(np.mean(similarities_list)) if similarities_list else 0.0
+        variance = float(np.var(similarities_list)) if len(similarities_list) > 1 else 0.0
         
         # Heuristic: High variance means the model fluctuates wildly between modes
         resonance_penalty = variance * 2.0
@@ -77,7 +88,7 @@ class ResonanceVerifier:
         
         return {
             "resonance_score": float(resonance_score),
-            "is_stable": resonance_score > 0.7,
+            "is_stable": bool(resonance_score > 0.7),
             "variance": float(variance),
             "mean_similarity": float(mean_similarity),
             "tested_modes": modes
