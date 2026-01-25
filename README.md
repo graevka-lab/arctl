@@ -187,8 +187,13 @@ Contributions, discussions, and feedback are welcome!
 
 If you have the hardware to retrain foundation models on Resonance-Aligned Data — let's connect.
 
-**Author:** Graevka (The Architect)  
+## 📧 Contact 
+
 **GitHub:** [@graevka-lab](https://github.com/graevka-lab)
+
+**X (Twitter):** [@Graevka](https://x.com/Graevka)
+
+**LinkedIn:** [Graevka Suvorov](https://www.linkedin.com/in/graevka-s-97332b369/)
 
 ---
 
