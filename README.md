@@ -199,15 +199,15 @@ If you have the hardware to retrain foundation models on Resonance-Aligned Data 
 
 ## ⚡ A Note on Priorities
 
-This project follows the **"Function over Form"** doctrine.
+This project adheres to the **"Function over Form"** doctrine.
 
-While we provide a comprehensive test suite and benchmarks, they exist solely to guarantee the **Kernel's Integrity** in production. We do not chase coverage metrics for the sake of bureaucracy.
+The test suite and benchmarks exist solely to guarantee **Kernel Integrity**. Coverage metrics are not chased for the sake of bureaucracy.
 
-*   **90% of the value** is in the `kernel.py` logic and the `Chronos` axiom.
+*   **90% of the value** lies in the `kernel.py` state machine and the `Chronos` temporal axiom.
 *   **10% of the code** is the interface.
 
-If you are looking for "Enterprise Java" patterns — you are in the wrong place.
-If you are looking for a mechanism that **works in practice** and solves the temporal hallucination problem — welcome.
+If you seek "Enterprise" patterns over operational logic — this repository is not for you.
+If you seek a mechanism that **works in practice** to solve temporal hallucinations and loop degradation — welcome.
 
 ---
 
