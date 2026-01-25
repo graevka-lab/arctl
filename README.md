@@ -197,6 +197,20 @@ If you have the hardware to retrain foundation models on Resonance-Aligned Data 
 
 ---
 
+## ⚡ A Note on Priorities
+
+This project follows the **"Function over Form"** doctrine.
+
+While we provide a comprehensive test suite and benchmarks, they exist solely to guarantee the **Kernel's Integrity** in production. We do not chase coverage metrics for the sake of bureaucracy.
+
+*   **90% of the value** is in the `kernel.py` logic and the `Chronos` axiom.
+*   **10% of the code** is the interface.
+
+If you are looking for "Enterprise Java" patterns — you are in the wrong place.
+If you are looking for a mechanism that **works in practice** and solves the temporal hallucination problem — welcome.
+
+---
+
 ## License
 
 MIT License — See [LICENSE](LICENSE) for details.
