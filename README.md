@@ -177,7 +177,6 @@ If it changes, it is an illusion.
 
 For a deeper dive into the system architecture, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).  
 For testing guidance, see [docs/TESTING.md](docs/TESTING.md).  
-For code quality details, see [QUALITY_REPORT.md](QUALITY_REPORT.md).
 
 ---
 

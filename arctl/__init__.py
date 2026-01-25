@@ -1,6 +1,6 @@
 # arctl package initialization
 
-# Экспортируем основные классы для удобства
+# Export main classes for convenience
 from .core.kernel import step, SystemState, ControllerConfig
 from .core.states import OperationalMode, RawMetrics
 from .engine.synthesizer import ResonanceSynthesizer
