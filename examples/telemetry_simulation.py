@@ -19,8 +19,9 @@ from arctl.core.kernel import step, SystemState, ControllerConfig
 from arctl.core.states import RawMetrics, OperationalMode
 
 # --- CONFIG ---
-STEPS = 100
+STEPS = 150
 OUTPUT_FILE = "arctl_demo.gif"
+WINDOW_SIZE = 5.0 # Show last 5 seconds of logical time
 
 print(f"🚀 INITIALIZING TELEMETRY SIMULATION ({STEPS} steps)...")
 
@@ -36,23 +37,22 @@ modes = []
 
 # 2. Simulation Loop
 for t in range(STEPS):
-    # Scenario: Waves of repetition with recovery phases
-    # High repetition waves followed by quiet periods
-    cycle_phase = (t % 30) / 30.0
-    
-    if cycle_phase < 0.3:
-        # Quiet phase
-        base_rep = 0.2 + 0.1 * np.sin(t * 0.1)
-    elif cycle_phase < 0.5:
-        # Rising repetition
-        base_rep = 0.3 + 0.4 * (cycle_phase - 0.3) / 0.2
+    # Scenario: Repetition creeps up, triggers emergency, cools down
+    if t < 30:
+        base_rep = 0.2 + 0.05 * np.sin(t * 0.5) # Normal
+    elif t < 60:
+        base_rep = 0.2 + (t - 30) * 0.03 # Rising
     else:
-        # High repetition wave
-        base_rep = 0.7 + 0.2 * np.sin((cycle_phase - 0.5) * np.pi * 5)
-    
+        # Feedback: If temp is high, rep drops
+        current_temp = state.active_config.temperature if state.active_config else 0.7
+        if current_temp > 1.0:
+            base_rep = 0.2 + np.random.normal(0, 0.05) # Loop broken
+        else:
+            base_rep = 0.9 # Stuck
+
     base_rep = np.clip(base_rep, 0.0, 1.0)
     
-    # Step
+    # Step (Simulate 0.1s per step)
     metrics = RawMetrics(entropy=0.5, divergence=0.0, repetition=base_rep)
     state = step(metrics, state, float(t) * 0.1, cfg)
     
@@ -74,17 +74,19 @@ ax1.set_ylabel('Repetition')
 ax1.set_ylim(0, 1.1)
 ax1.legend(loc='upper left', fontsize=8)
 ax1.set_title("ARCTL: HARD CORE INTERVENTION", color='#00ffcc', loc='left', fontsize=10)
+ax1.grid(True, alpha=0.1)
 
 ax2.set_ylabel('Temperature')
 ax2.set_ylim(0, 1.5)
-ax2.set_xlabel('Logical Time')
+ax2.set_xlabel('Logical Time (s)')
+ax2.grid(True, alpha=0.1)
 
 status_text = ax1.text(0.02, 0.85, "", transform=ax1.transAxes, color='white', fontweight='bold')
 
 def init():
     line_rep.set_data([], [])
     line_temp.set_data([], [])
-    ax1.set_xlim(0, 50) # Initial window
+    ax1.set_xlim(0, WINDOW_SIZE)
     return line_rep, line_temp, status_text
 
 def animate(i):
@@ -96,20 +98,22 @@ def animate(i):
     line_rep.set_data(x, y_rep)
     line_temp.set_data(x, y_temp)
     
-    # Sliding Window Effect (Oscilloscope)
-    if i > 50:
-        ax1.set_xlim(i - 50, i)
-        ax2.set_xlim(i - 50, i)
-    else:
-        ax1.set_xlim(0, 50)
-        ax2.set_xlim(0, 50)
+    # Smart Sliding Window
+    if x:
+        current_time = x[-1]
+        if current_time > WINDOW_SIZE:
+            ax1.set_xlim(current_time - WINDOW_SIZE, current_time)
+            ax2.set_xlim(current_time - WINDOW_SIZE, current_time)
+        else:
+            ax1.set_xlim(0, WINDOW_SIZE)
+            ax2.set_xlim(0, WINDOW_SIZE)
     
     # Mode Status
     mode = modes[i] if i < len(modes) else modes[-1]
     if mode == OperationalMode.EMERGENCY:
         status_text.set_text("[!] EMERGENCY")
         status_text.set_color('#ff3333')
-        ax2.axvspan(max(0, i-1), i, color='#330000', alpha=0.5) # Flash red background
+        ax2.axvspan(max(0, x[-1]-0.1), x[-1], color='#330000', alpha=0.5) # Flash red background
     elif mode == OperationalMode.COOLDOWN:
         status_text.set_text("(*) COOLDOWN")
         status_text.set_color('#00ccff')
@@ -125,4 +129,4 @@ ani.save(OUTPUT_FILE, writer=PillowWriter(fps=20))
 print("✅ Done.")
 
 if __name__ == "__main__":
-    pass  # Main code is executed at module level
+    pass
