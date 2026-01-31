@@ -14,8 +14,7 @@ Visualizing the system's movement through Repetition (X), Energy (Y), and Temper
 Real-time monitoring of repetition loops and thermal spikes.
 ![Telemetry Demo](arctl_demo.gif)
 
-**arctl** is a hybrid control architecture...
-`arctl` is a hybrid control architecture for LLM inference, combining:
+**arctl** is a hybrid control architecture for LLM inference, combining:
 1. **Hard Core** — a deterministic state machine for physical sampling control.
 2. **Soft Core** — a semantic resonance engine for latent space steering.
 

@@ -1,6 +1,28 @@
 """
 Chronos Module v1.0
-Synchronizes the discrete Model Cursor with the continuous User Cursor.
+
+Temporal synchronization for discrete models in continuous time.
+
+Modern LLMs suffer from "Future Shock": they deny events after their training cutoff.
+Chronos solves this not by retraining, but by explicit TEMPORAL ALIGNMENT.
+
+The module classifies time gaps and generates context injection signals to keep the model
+aware of reality:
+  - SYNC (< 1 min): Immediate continuity, high context retention
+  - LAG (1 min - 24h): User lived through time the model didn't see
+  - GAP (> 24h): Significant reality shift, recommend context reset
+
+Philosophy:
+    "The model is frozen in time. We are not. Tell it that it lives now."
+
+Usage:
+    from arctl.core.chronos import Chronos
+    
+    time_state, context_note = Chronos.sync(prev_time, current_time)
+    
+    if time_state == TimeState.LAG:
+        # Inject context_note into the system prompt
+        full_prompt = f"{context_note}\n\nUser query: {user_input}"
 """
 
 from datetime import datetime
@@ -16,7 +38,42 @@ class Chronos:
     @staticmethod
     def sync(prev_ts: float, current_ts: float) -> Tuple[TimeState, str]:
         """
-        Calculates the time gap and generates a context update signal.
+        Calculate time gap and generate context update signal.
+        
+        Classifies the temporal relationship between two timestamps and produces
+        a synchronization note for context injection when needed.
+        
+        Args:
+            prev_ts: Previous interaction timestamp (wall-clock seconds)
+            current_ts: Current timestamp (wall-clock seconds)
+        
+        Returns:
+            Tuple of:
+            - TimeState: Classification (SYNC, LAG, or GAP)
+            - str: Context synchronization note (empty for SYNC, non-empty for LAG/GAP)
+        
+        Time Thresholds:
+            - SYNC: delta < 60 seconds (immediate flow, no context injection needed)
+            - LAG: 60s <= delta < 86400s (24+ hour gap, suggest context reset)
+            - GAP: delta >= 86400s (full day gap, energy restoration triggered)
+        
+        Example:
+            >>> state, note = Chronos.sync(100.0, 110.0)
+            >>> state == TimeState.SYNC
+            True
+            >>> note == ""
+            True
+            
+            >>> state, note = Chronos.sync(100.0, 3700.0)
+            >>> state == TimeState.LAG
+            True
+            >>> "[SYSTEM]: TEMPORAL SYNC" in note
+            True
+        
+        Notes:
+            - Assumes prev_ts <= current_ts (monotonic time)
+            - SYNC returns empty note to avoid noise in the context
+            - LAG/GAP return detailed notes for prompt injection
         """
         delta = current_ts - prev_ts
         

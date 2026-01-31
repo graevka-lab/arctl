@@ -243,7 +243,7 @@ class TestEnergyManagement(unittest.TestCase):
         self.state = SystemState.initial(0.0)
     
     def test_energy_restoration_on_24h_gap(self):
-        """Energy fully restored after 24+ hour gap (TimeState.GAP)"""
+        """Energy partially restored (conservative) after 24+ hour gap (TimeState.GAP)"""
         # Deplete energy
         depleted_state = self.state._replace(energy=2)
         
@@ -252,8 +252,11 @@ class TestEnergyManagement(unittest.TestCase):
         # Step with large time gap (86400+ seconds = 24+ hours)
         new_state = step(metrics, depleted_state, 86400 + 1, self.cfg)
         
-        # Energy should be fully restored
-        self.assertEqual(new_state.energy, 10)
+        # Energy should be partially restored (conservative: +1 only, once per lifecycle)
+        # Design: Review 2.0 mandates single bounded recharge event
+        self.assertEqual(new_state.energy, 3)  # 2 + 1 (conservative restoration)
+        self.assertEqual(new_state.time_state, TimeState.GAP)
+        self.assertTrue(new_state.reset_used)  # Flag consumed
         self.assertEqual(new_state.time_state, TimeState.GAP)
     
     def test_energy_clamped_to_bounds(self):
