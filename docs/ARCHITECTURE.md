@@ -47,8 +47,7 @@ Time is modeled on two independent axes:
 ### 3.1 Wall-Clock Time
 
 - Represents external, real-world time
-- Used for:
-  - anti-stutter protection
+- Used for:  - anti-stutter protection
   - starvation detection
   - ontological reset after prolonged absence
 
@@ -97,7 +96,6 @@ The controller operates in exactly one of four modes:
 - No transitions out are permitted
 - Control physics are frozen
 - Sampling configuration is minimal and deterministic
-
 FALLBACK represents ontological failure, not temporary safety mode.
 
 ---
@@ -117,16 +115,20 @@ There is no energy regeneration loop that guarantees recovery.
 
 ---
 
-## 6. Ontological Reset
+## 6. Ontological Reset (Energy-Conservative)
 
-After prolonged absence of interaction, energy may be reset to maximum.
+After prolonged absence of interaction, the system may perform a **single, bounded energy recovery**.
 
 This reset:
-- Is non-interactive
-- Does not update last_interaction
-- Exists to prevent permanent starvation due to inactivity
+- Grants **at most one unit** of energy (δ ≪ Eₘₐₓ)
+- Is permitted **only once during the entire system lifetime**
+- Is tracked via an immutable `reset_used` flag in `SystemState`
+- Does **not** constitute recovery from failure
+- Exists solely to prevent permanent starvation due to initial inactivity
 
-This is a deliberate tradeoff and must not be treated as recovery.
+This design preserves **irreversibility** under sustained anomaly while acknowledging real-world usage patterns.
+
+*Formally: ∑ᵢ wᵢ ≤ 1, where wᵢ indicates reset activation at step i.*
 
 ---
 
@@ -144,7 +146,6 @@ Currently:
 - Other metrics are preserved for forward compatibility
 
 State evolution is deterministic given inputs.
-
 ---
 
 ## 8. Failure Philosophy
