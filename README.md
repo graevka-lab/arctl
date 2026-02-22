@@ -154,13 +154,13 @@ new_state = step(metrics, state, 1.0, cfg)
 ### Running Tests
 
 ```bash
-# All tests (36 total): unit + integration + Icarus
+# All tests (42 total): unit + integration + Icarus
 python -m unittest discover -s tests -v
 # or: python -m pytest tests/ -v
 python run_tests.py
 
 # Specific suites
-python -m unittest tests.test_core -v       # Unit tests (21)
+python -m unittest tests.test_core -v       # Unit tests (27)
 python -m unittest tests.test_integration -v # Integration (8)
 python -m unittest tests.test_icarus -v     # Icarus stability (7)
 
