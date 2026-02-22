@@ -1,0 +1,13 @@
+numpy>=1.21.0
+
+[full]
+sentence-transformers>=2.2.0
+matplotlib>=3.5.0
+torch>=2.0.0
+
+[verification]
+sentence-transformers>=2.2.0
+torch>=2.0.0
+
+[viz]
+matplotlib>=3.5.0
