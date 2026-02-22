@@ -13,7 +13,7 @@ from typing import List
 from dataclasses import replace
 
 from arctl.core.kernel import step, ControllerConfig, SystemState
-from arctl.core.states import RawMetrics, OperationalMode
+from arctl.core.states import RawMetrics, OperationalMode, TimeState
 from arctl.verification.lexical import LexicalMetrics
 from arctl.verification.metrics import ResonanceVerifier
 
@@ -54,30 +54,26 @@ class TestKernelWithLexicalMetrics(unittest.TestCase):
         self.assertEqual(new_state.mode, OperationalMode.EMERGENCY)
     
     def test_diverse_tokens_stay_standard(self):
-        """Diverse token sequence should keep system in STANDARD"""
+        """Diverse token sequence (low repetition) should keep system in STANDARD"""
         cfg = ControllerConfig(
             policy=replace(ControllerConfig().policy, smoothing_alpha=1.0)
         )
         state = SystemState.initial(0.0)
         
-        # Diverse tokens
-        diverse_tokens = ["the", "quick", "brown", "fox", "jumps", "over", "lazy", "dog"] * 5
-        
+        # Many unique tokens → low n-gram repetition
+        diverse_tokens = [f"w{i}" for i in range(80)]
         lex_metrics = LexicalMetrics.calculate(diverse_tokens, window=50)
         
-        # Convert to RawMetrics
         metrics = RawMetrics(
             entropy=lex_metrics.entropy,
             divergence=lex_metrics.divergence,
             repetition=lex_metrics.repetition
         )
-        
-        # Step with diverse metrics
         new_state = step(metrics, state, 1.0, cfg)
         
-        # Should remain in STANDARD (low repetition)
-        if new_state.s_repetition <= cfg.policy.repetition_threshold:
-            self.assertEqual(new_state.mode, OperationalMode.STANDARD)
+        self.assertLessEqual(new_state.s_repetition, cfg.policy.repetition_threshold,
+                             "unique token sequence should have low repetition")
+        self.assertEqual(new_state.mode, OperationalMode.STANDARD)
 
 
 class TestFullWorkflow(unittest.TestCase):
@@ -184,39 +180,33 @@ class TestLongRunningBehavior(unittest.TestCase):
             policy=replace(ControllerConfig().policy, smoothing_alpha=1.0)
         )
         state = SystemState.initial(0.0)
-        
         high_rep = RawMetrics(entropy=0.5, divergence=0.0, repetition=0.9)
         low_rep = RawMetrics(entropy=0.5, divergence=0.0, repetition=0.1)
-        
         emergency_count = 0
         fallback_reached = False
         now = 0.0
         
-        # Try to exhaust energy through multiple EMERGENCY cycles
-        for cycle in range(10):  # Max 10 cycles (3*10=30 steps max)
+        # Each EMERGENCY needs 55 steps (0.1s each) to timeout; COOLDOWN needs 25 steps
+        for _ in range(20):  # 5+ full cycles to go 10→7→4→1→FALLBACK
             if state.mode == OperationalMode.FALLBACK:
                 fallback_reached = True
                 break
-            
             if state.mode == OperationalMode.STANDARD:
-                # Trigger emergency
                 state = step(high_rep, state, now + 1.0, cfg)
                 if state.mode == OperationalMode.EMERGENCY:
                     emergency_count += 1
                 now += 1.0
             elif state.mode == OperationalMode.EMERGENCY:
-                # Exit emergency (timeout)
-                state = step(low_rep, state, now + 6.0, cfg)
-                now += 6.0
+                for i in range(55):
+                    state = step(low_rep, state, now + i * 0.1, cfg)
+                now += 5.5
             elif state.mode == OperationalMode.COOLDOWN:
-                # Exit cooldown
-                state = step(low_rep, state, now + 3.0, cfg)
-                now += 3.0
+                for i in range(25):
+                    state = step(low_rep, state, now + i * 0.1, cfg)
+                now += 2.5
         
-        # After many cycles, should reach FALLBACK
-        # (need 3 emergencies to deplete 10 → 7 → 4 → 1 → FALLBACK)
-        if emergency_count >= 3:
-            self.assertTrue(fallback_reached or state.energy <= 2)
+        self.assertGreaterEqual(emergency_count, 3, "should trigger at least 3 emergencies")
+        self.assertTrue(fallback_reached, "energy depletion must lead to FALLBACK")
 
 
 class TestErrorRecovery(unittest.TestCase):
@@ -237,7 +227,7 @@ class TestErrorRecovery(unittest.TestCase):
         self.assertEqual(state.mode, OperationalMode.STANDARD)
     
     def test_time_gap_handling(self):
-        """System properly handles time gaps (24h+ inactivity)"""
+        """System properly handles time gaps (24h+ inactivity) — conservative reset (+1 only)"""
         cfg = ControllerConfig()
         state = SystemState.initial(0.0)._replace(energy=0)
         metrics = RawMetrics(entropy=0.5, divergence=0.0, repetition=0.1)
@@ -245,11 +235,13 @@ class TestErrorRecovery(unittest.TestCase):
         # Zero energy
         self.assertEqual(state.energy, 0)
         
-        # Large time gap
+        # Large time gap (24h+)
         new_state = step(metrics, state, 86400 + 1, cfg)
         
-        # Energy should be fully restored
-        self.assertEqual(new_state.energy, cfg.policy.max_energy)
+        # Conservative restoration: +1 only (Review 2.0), not full recharge
+        self.assertEqual(new_state.energy, 1)
+        self.assertTrue(new_state.reset_used)
+        self.assertEqual(new_state.time_state, TimeState.GAP)
 
 
 if __name__ == '__main__':

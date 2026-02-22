@@ -11,7 +11,7 @@ Provides:
 import sys
 import unittest
 from pathlib import Path
-from typing import List, Dict
+from typing import List, Dict, Optional
 import json
 from datetime import datetime
 
@@ -19,7 +19,7 @@ from datetime import datetime
 class TestRunner:
     """Unified test runner for all test suites"""
     
-    def __init__(self, test_dir: Path = None):
+    def __init__(self, test_dir: Optional[Path] = None):
         """
         Initialize test runner.
         
@@ -84,17 +84,44 @@ class TestRunner:
         
         return result.wasSuccessful()
     
+    def run_icarus_tests(self) -> bool:
+        """
+        Run Icarus stability tests only.
+        
+        Returns:
+            True if all tests passed
+        """
+        print("\n" + "=" * 80)
+        print("RUNNING ICARUS STABILITY TESTS")
+        print("=" * 80)
+        
+        loader = unittest.TestLoader()
+        suite = loader.discover(str(self.test_dir), pattern='test_icarus.py')
+        
+        runner = unittest.TextTestRunner(verbosity=2)
+        result = runner.run(suite)
+        
+        self.results['icarus'] = {
+            'tests_run': result.testsRun,
+            'failures': len(result.failures),
+            'errors': len(result.errors),
+            'success': result.wasSuccessful()
+        }
+        
+        return result.wasSuccessful()
+    
     def run_all_tests(self) -> bool:
         """
-        Run all unit and integration tests.
+        Run all unit, integration, and Icarus tests.
         
         Returns:
             True if all tests passed
         """
         unit_ok = self.run_unit_tests()
         integration_ok = self.run_integration_tests()
+        icarus_ok = self.run_icarus_tests()
         
-        return unit_ok and integration_ok
+        return unit_ok and integration_ok and icarus_ok
     
     def run_benchmarks(self) -> None:
         """Run performance benchmarks"""
@@ -106,7 +133,7 @@ class TestRunner:
             from tests.benchmarks import run_all_benchmarks
             run_all_benchmarks()
         except ImportError as e:
-            print(f"❌ Failed to import benchmarks: {e}")
+            print(f"Failed to import benchmarks: {e}")
     
     def print_summary(self) -> None:
         """Print test summary"""
@@ -115,7 +142,7 @@ class TestRunner:
         print("=" * 80)
         
         for suite_name, stats in self.results.items():
-            status = "✅ PASSED" if stats['success'] else "❌ FAILED"
+            status = "PASSED" if stats['success'] else "FAILED"
             print(f"\n{suite_name.upper()}: {status}")
             print(f"  Tests run:  {stats['tests_run']}")
             print(f"  Failures:   {stats['failures']}")
@@ -125,9 +152,9 @@ class TestRunner:
         all_passed = all(s['success'] for s in self.results.values())
         print("\n" + "-" * 80)
         if all_passed:
-            print("✅ ALL TESTS PASSED")
+            print("ALL TESTS PASSED")
         else:
-            print("❌ SOME TESTS FAILED")
+            print("SOME TESTS FAILED")
         
         return all_passed
     
@@ -147,7 +174,7 @@ class TestRunner:
         with open(filepath, 'w') as f:
             json.dump(report, f, indent=2)
         
-        print(f"\n✅ Results exported to {filepath}")
+        print(f"\nResults exported to {filepath}")
 
 
 def main():
@@ -159,8 +186,9 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python run_tests.py              # Run all tests
+  python run_tests.py              # Run all tests (unit + integration + Icarus)
   python run_tests.py --unit       # Run unit tests only
+  python run_tests.py --icarus     # Run Icarus stability tests only
   python run_tests.py --bench      # Run benchmarks only
   python run_tests.py --export results.json  # Export results
         """
@@ -176,6 +204,12 @@ Examples:
         '--integration',
         action='store_true',
         help='Run integration tests only'
+    )
+    
+    parser.add_argument(
+        '--icarus',
+        action='store_true',
+        help='Run Icarus stability tests only'
     )
     
     parser.add_argument(
@@ -195,7 +229,7 @@ Examples:
     runner = TestRunner()
     
     # Default: run all if no specific option
-    if not (args.unit or args.integration or args.bench):
+    if not (args.unit or args.integration or args.icarus or args.bench):
         runner.run_all_tests()
         runner.print_summary()
     else:
@@ -203,6 +237,8 @@ Examples:
             runner.run_unit_tests()
         if args.integration:
             runner.run_integration_tests()
+        if args.icarus:
+            runner.run_icarus_tests()
         if args.bench:
             runner.run_benchmarks()
         
@@ -213,8 +249,9 @@ Examples:
     if args.export:
         runner.export_results(Path(args.export))
     
-    # Exit with appropriate code
-    sys.exit(0 if runner.results.get('success', True) else 1)
+    # Exit with appropriate code (results keys: unit, integration, icarus)
+    overall = all(r.get('success', True) for r in runner.results.values()) if runner.results else True
+    sys.exit(0 if overall else 1)
 
 
 if __name__ == '__main__':

@@ -205,15 +205,11 @@ def benchmark_energy_restoration():
 def benchmark_many_fast_steps():
     """Benchmark: Many rapid steps (anti-stutter buffer accumulation)"""
     cfg = ControllerConfig()
-    state = SystemState.initial(0.0)
     metrics = RawMetrics(entropy=0.5, divergence=0.0, repetition=0.1)
     
-    step_count = [0]
-    
     def func():
-        nonlocal state
-        # Rapid calls with tiny deltas (most will be buffered by anti-stutter)
-        for i in range(100):
+        state = SystemState.initial(0.0)
+        for _ in range(100):
             state = step(metrics, state, state.last_call_time + 0.001, cfg)
     
     return Benchmarker.benchmark("100 rapid steps (anti-stutter)", func, iterations=100)

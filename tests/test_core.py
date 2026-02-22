@@ -15,10 +15,34 @@ import time
 from typing import Dict, List
 from dataclasses import replace
 
-from arctl.core.kernel import step, ControllerConfig, SystemState, TimeConfig, PolicyConfig
+from arctl.core.kernel import step, get_diagnostics, ControllerConfig, SystemState, TimeConfig, PolicyConfig
 from arctl.core.states import RawMetrics, OperationalMode, TimeState
+from arctl.core.chronos import temporal_state_at, TemporalCoordinateState, LAYERS, time_to_layers, TimeLayers
 from arctl.verification.lexical import LexicalMetrics
 from arctl.verification.metrics import ResonanceVerifier
+
+
+class TestDiagnostics(unittest.TestCase):
+    """Tests for get_diagnostics() telemetry output."""
+
+    def test_get_diagnostics_returns_expected_keys(self):
+        """Diagnostics dict has required keys and sensible value types."""
+        state = SystemState.initial(100.0)
+        diag = get_diagnostics(state, 100.0 + 3600.0)  # 1 hour later
+        required = {
+            'days_since_last_interaction', 'energy_level', 'reset_used',
+            'current_mode', 'time_state', 'logical_time', 'context_note'
+        }
+        self.assertEqual(set(diag.keys()), required)
+        self.assertIsInstance(diag['days_since_last_interaction'], (int, float))
+        self.assertIsInstance(diag['energy_level'], int)
+        self.assertIsInstance(diag['reset_used'], bool)
+        self.assertIsInstance(diag['current_mode'], str)
+        self.assertIsInstance(diag['time_state'], str)
+        self.assertIsInstance(diag['logical_time'], (int, float))
+        self.assertIsInstance(diag['context_note'], str)
+        self.assertGreaterEqual(diag['energy_level'], 0)
+        self.assertLessEqual(diag['energy_level'], 10)
 
 
 class TestKernelBasics(unittest.TestCase):
@@ -257,7 +281,6 @@ class TestEnergyManagement(unittest.TestCase):
         self.assertEqual(new_state.energy, 3)  # 2 + 1 (conservative restoration)
         self.assertEqual(new_state.time_state, TimeState.GAP)
         self.assertTrue(new_state.reset_used)  # Flag consumed
-        self.assertEqual(new_state.time_state, TimeState.GAP)
     
     def test_energy_clamped_to_bounds(self):
         """Energy is always clamped to [0, max_energy]"""
@@ -337,6 +360,47 @@ class TestLexicalMetrics(unittest.TestCase):
         
         # Diverse should have higher entropy than repetitive
         self.assertGreater(metrics_diverse.entropy, metrics_repetitive.entropy)
+
+
+class TestChronosTSpiral(unittest.TestCase):
+    """Tests for T-SPIRAL_ALIGNMENT semantic anchor (Chronos v1.2)."""
+
+    def test_temporal_state_past_is_frozen(self):
+        """COORDINATE < CURSOR -> FROZEN_STATE [READ_ONLY]"""
+        state = temporal_state_at(coordinate=100.0, cursor=200.0)
+        self.assertEqual(state, TemporalCoordinateState.FROZEN_STATE)
+        self.assertEqual(state.value, "READ_ONLY")
+
+    def test_temporal_state_future_is_probabilistic(self):
+        """COORDINATE > CURSOR -> PROBABILISTIC_FIELD [READ_WRITE]"""
+        state = temporal_state_at(coordinate=200.0, cursor=100.0)
+        self.assertEqual(state, TemporalCoordinateState.PROBABILISTIC_FIELD)
+        self.assertEqual(state.value, "READ_WRITE")
+
+    def test_temporal_state_boundary(self):
+        """COORDINATE == CURSOR (NOW, transition point) -> FROZEN_STATE"""
+        state = temporal_state_at(coordinate=50.0, cursor=50.0)
+        self.assertEqual(state, TemporalCoordinateState.FROZEN_STATE)
+
+    def test_layers_count(self):
+        """LAYERS has 8 elements (YEARS down to MILLISECONDS)."""
+        self.assertEqual(len(LAYERS), 8)
+        self.assertIn("SECONDS", LAYERS)
+        self.assertIn("MILLISECONDS", LAYERS)
+
+    def test_time_to_layers(self):
+        """time_to_layers decomposes timestamp into 8 components (UTC)."""
+        ts = 1700050245.5
+        layers = time_to_layers(ts)
+        self.assertIsInstance(layers, TimeLayers)
+        self.assertEqual(layers.years, 2023)
+        self.assertEqual(layers.months, 11)
+        self.assertEqual(layers.days, 15)
+        self.assertIn(layers.hours, range(24))
+        self.assertIn(layers.minutes, range(60))
+        self.assertEqual(layers.seconds, 45)
+        self.assertIn(layers.milliseconds, range(1000))
+        self.assertEqual(layers.to_dict().keys(), set(LAYERS))
 
 
 class TestTimeManagement(unittest.TestCase):

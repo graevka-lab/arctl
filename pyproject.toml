@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "arctl"
-version = "1.0.0"
+version = "1.2.0"
 description = "Hybrid Control Systems for LLMs (Deterministic + Semantic)"
 readme = "README.md"
-authors = [{ name = "Graevka", email = "your.email@example.com" }]
+authors = [{ name = "Graevka", email = "graevka@users.noreply.github.com" }]
 license = { file = "LICENSE" }
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -18,9 +18,12 @@ classifiers = [
 requires-python = ">=3.8"
 dependencies = [
     "numpy",
-    "sentence-transformers",
-    "matplotlib"
 ]
 
+[project.optional-dependencies]
+verification = ["sentence-transformers"]
+viz = ["matplotlib"]
+full = ["sentence-transformers", "matplotlib"]
+
 [project.urls]
-Homepage = "https://github.com/graevka/arctl"
+Homepage = "https://github.com/graevka-lab/arctl"

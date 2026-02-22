@@ -1,6 +1,8 @@
 """
 Multi-phase resonance profiles for different knowledge domains.
 """
+# CALM profile is the low-entropy baseline for truth verification.
+# Icarus stability_index (0.95) anchors the Hard Core; profiles tune the Soft Core.
 
 from typing import Dict
 
@@ -25,6 +27,7 @@ DOMAIN_PROFILES = {
 }
 
 def get_profile(domain: str, phase: str = "analyze") -> Dict[str, float]:
+    """Return resonance profile (emotion mix) for the given domain and phase."""
     if domain not in DOMAIN_PROFILES:
         return {"calm": 0.8, "wonder": 0.2}
     

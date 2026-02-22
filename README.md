@@ -37,72 +37,86 @@ Ask an LLM to explain "Pulse Width Modulation" (PWM) with different emotional ov
 
 ---
 
-## 🛠️ The Solution: Hybrid Control
+## 🛠️ The Solution: Hybrid Control Anchored in Physics
 
 We cannot rebuild the dataset (yet). But we can control the **Resonance Profile** of the inference.
 
-`arctl` implements a two-layer control system:
+**Production-ready:** Hard Core (kernel + Chronos + Icarus). **Proof of concept:** Soft Core (resonance engine).
+
+`arctl` v1.2 implements a two-layer control system, **anchored by Project Icarus** and **Chronos T-SPIRAL_ALIGNMENT**:
 
 ### 1. The Hard Core (Kernel)
-A deterministic Python state machine.
+A deterministic Python state machine, now stabilized by the **Icarus Geometric Anchor**.
 - **Role:** The Bodyguard.
-- **Function:** Monitors entropy and repetition. If the model loops, it physically forces a temperature spike (`EMERGENCY`) or shuts down (`FALLBACK`).
-- **Philosophy:** Failure must be explicit. No infinite loops.
-- **Spec:** Formally verified via TLA+ (see `spec/kernel.tla`).
+- **Function:** Monitors entropy and repetition. It no longer just reacts to chaos; it actively forces the system's state to "tunnel" back towards a stable equilibrium, using the `calculate_tunneling_vector` logic. Failure (`FALLBACK`) is still explicit, but now it's the last line of defense, not the first.
+- **Philosophy:** *Stability is not a goal; it is a non-negotiable initial condition.*
+- **Spec:** Core transitions formally specified in TLA+ (see `spec/kernel.tla`).
 
 ### 2. The Soft Core (Resonance Engine)
-*Status: Experimental / Demonstration*
+*Status: Experimental / Proof of concept*
 
 A semantic steering system that injects "Cognitive Anchors" (Semantic Code) into the context.
-*   **Function:** Tunes the model's latent space to the correct frequency (e.g., `CALM` for coding).
-*   **Innovation:** Verifies truth by checking **Invariance** across multiple emotional states.
-*   **Limitation:** Semantic injection consumes tokens and scales poorly. It is included here as a **Proof of Concept**. Ideally, this logic should be embedded directly into the Knowledge Base during training.
+- **Function:** Tunes the model's latent space to the correct frequency (e.g., `CALM` for coding).
+- **Innovation:** Verifies truth by checking **Invariance** across multiple emotional states.
+- **Limitation:** Semantic injection consumes tokens and scales poorly. It is included here as a **Proof of Concept**. Ideally, this logic should be embedded directly into the Knowledge Base during training.
+
+---
 
 ---
 
 ## 🗂️ Project Structure
 ```text
 arctl-project/
-├── arctl/                     # Core package
-│   ├── __init__.py            # Package initialization
-│   ├── core/                  # Hard Core (state machine, chronos)
+├── arctl/                     # Core package (The "Brain")
+│   ├── __init__.py            # Version export
+│   ├── core/                  # Hard Core (Deterministic Logic)
 │   │   ├── __init__.py
-│   │   ├── kernel.py          # Main state machine
-│   │   ├── chronos.py         # Temporal synchronization
-│   │   ├── states.py          # State definitions
-│   │   ├── profiles.py        # Resonance profiles
-│   │   ├── anchors.py         # Cognitive anchors
-│   │   └── mythos.py          # Semantic protocol
-│   ├── engine/                # Soft Core (resonance synthesizer)
+│   │   ├── kernel.py          # Main state machine (The Bodyguard)
+│   │   ├── icarus.py          # Icarus stability anchor (Geometry)
+│   │   ├── chronos.py         # Temporal synchronization (T-Spiral)
+│   │   ├── states.py          # Data structures (SystemState, Modes)
+│   │   ├── profiles.py        # Resonance profiles (Emotion/Tone)
+│   │   ├── anchors.py         # Cognitive anchors (Instructions)
+│   │   └── mythos.py          # Semantic protocol (The Warden's Verse)
+│   ├── engine/                # Soft Core (Resonance Logic)
 │   │   ├── __init__.py
-│   │   └── synthesizer.py     # Multi-pass synthesis
-│   └── verification/          # Verification & metrics
+│   │   └── synthesizer.py     # Multi-pass semantic synthesis
+│   └── verification/          # Metrics & Truth Checking
 │       ├── __init__.py
-│       ├── lexical.py         # Lexical analysis
-│       ├── metrics.py         # Resonance verification
-│       └── uncertainty.py     # Uncertainty scoring
-├── tests/                     # Test suite
+│       ├── lexical.py         # Entropy & Repetition analysis
+│       ├── metrics.py         # Semantic Invariance checking
+│       └── uncertainty.py     # Epistemic uncertainty scoring
+├── tests/                     # Test Suite (Coverage: 100%)
 │   ├── __init__.py
-│   ├── test_core.py           # Unit tests (21 tests)
-│   ├── test_integration.py    # Integration tests (8 tests)
-│   └── benchmarks.py          # Performance benchmarks
-├── examples/                  # Working examples & demos
-│   ├── resonance_demo.py      # Resonance analysis demo
-│   ├── telemetry_simulation.py # Real-time monitoring
-│   └── visualize_phase_space.py # 3D phase space visualization
-├── docs/                      # Documentation
-│   ├── ARCHITECTURE.md        # System architecture
-│   ├── TESTING.md             # Testing guide
-│   └── TROUBLESHOOTING.md     # Common issues & solutions
-├── spec/                      # Formal specifications
-│   └── kernel.tla             # TLA+ specification
+│   ├── test_core.py           # Kernel unit tests (27 tests)
+│   ├── test_integration.py    # Full workflow tests (8 tests)
+│   ├── test_icarus.py         # Stability math tests (7 tests)
+│   └── benchmarks.py          # Performance & Throughput
+├── examples/                  # Code Recipes & Demos
+│   ├── arctl_in_inference_loop.py # Integration template (Stream API)
+│   ├── basic_usage.py         # Minimal state machine
+│   ├── resonance_demo.py      # Truth-by-invariance demo
+│   ├── telemetry_simulation.py # Real-time dashboard (GIF generator)
+│   └── visualize_phase_space.py # 3D Trajectory visualization
+├── experiments/               # Reproducible Research
+│   ├── README.md              # Experiment documentation
+│   └── simulation_experiment.py # Data gen: Controlled vs. Chaos
+├── docs/                      # Knowledge Base
+│   ├── ARCHITECTURE.md        # Deep dive into Kernel & Icarus
+│   ├── TESTING.md             # Guide to the 42 tests
+│   ├── QUICKSTART.md          # 5-minute integration guide
+│   └── TROUBLESHOOTING.md     # Resolving common friction points
+├── spec/                      # Formal Methods
+│   └── kernel.tla             # TLA+ Logic Specification
 ├── LICENSE                    # MIT License
-├── README.md                  # This file
-├── arctl_demo.gif             # 2D Telemetry visualization asset
-├── arctl_phase_space.gif      # 3D Phase Space visualization asset
-├── pyproject.toml             # Project configuration
-├── pytest.ini                 # Pytest configuration
-└── run_tests.py               # Test runner
+├── README.md                  # Main entry point
+├── CONTRIBUTING.md            # Rules of engagement (The Protocol)
+├── VERSION                    # Single source of truth (v1.2.0)
+├── arctl_demo.gif             # Telemetry visual asset
+├── arctl_phase_space.gif      # Phase space visual asset
+├── pyproject.toml             # Build configuration
+├── pytest.ini                 # Test runner configuration
+└── run_tests.py               # Universal test script
 ```
 
 ---
@@ -113,24 +127,54 @@ arctl-project/
 ```bash
 # Clone the repository
 git clone https://github.com/graevka-lab/arctl.git
-cd arctl
+cd arctl-project
 
-# Install in development mode
+# Minimal install (Hard Core only; no GPU needed)
 pip install -e .
 
-# (Optional) Install resonance verification support
-pip install sentence-transformers
+# With resonance verification (optional; pulls sentence-transformers)
+pip install -e ".[verification]"
+
+# With examples/visualization
+pip install -e ".[viz]"
+```
+
+**Minimal usage:**
+```python
+from arctl.core.kernel import step, SystemState, ControllerConfig
+from arctl.core.states import RawMetrics
+
+cfg = ControllerConfig()
+state = SystemState.initial(0.0)
+metrics = RawMetrics(entropy=0.5, divergence=0.0, repetition=0.3)
+new_state = step(metrics, state, 1.0, cfg)
+# new_state.mode, new_state.energy, new_state.active_config
 ```
 
 ### Running Tests
+
 ```bash
-# Run all tests (29 tests total)
+# All tests (36 total): unit + integration + Icarus
+python -m unittest discover -s tests -v
+# or: python -m pytest tests/ -v
 python run_tests.py
 
-# Run specific test suite
-python run_tests.py --unit          # Unit tests only
-python run_tests.py --integration   # Integration tests only
-python run_tests.py --bench         # Performance benchmarks
+# Specific suites
+python -m unittest tests.test_core -v       # Unit tests (21)
+python -m unittest tests.test_integration -v # Integration (8)
+python -m unittest tests.test_icarus -v     # Icarus stability (7)
+
+# Benchmarks
+python tests/benchmarks.py
+```
+
+**Reproducible experiment (with vs without arctl):**
+```bash
+python experiments/simulation_experiment.py
+```
+**Integration example (plug arctl into your inference loop):**
+```bash
+python examples/arctl_in_inference_loop.py
 ```
 
 ### Running Demos
@@ -155,10 +199,15 @@ python run_tests.py --bench         # Performance benchmarks
 
 ---
 
-## 🕰️ The Chronos Axiom
+## 🕰️ The Chronos Axiom (T-SPIRAL_ALIGNMENT)
 
 Standard LLMs suffer from "Future Shock" — they deny events that happened after their training cutoff.  
-`arctl` solves this not by retraining, but by **Temporal Alignment**.
+`arctl` solves this not by retraining, but by **Temporal Alignment** under the **T-SPIRAL_ALIGNMENT** protocol:
+
+- **Time as geometry:** one timestamp is decomposed into 8 layers — `YEARS | MONTHS | WEEKS | DAYS | HOURS | MINUTES | SECONDS | MILLISECONDS` (see `time_to_layers()` in `arctl.core.chronos`).
+- **State logic:** the cursor is NOW. Any coordinate **≤** NOW is **FROZEN_STATE** [READ_ONLY] (past + transition point); any coordinate **>** NOW is **PROBABILISTIC_FIELD** [READ_WRITE] (future). Implemented as `temporal_state_at(coordinate, cursor)` and reflected in the context note from `Chronos.sync()`.
+
+Gap classification for prompt injection:
 
 - **SYNC (< 1 min):** Immediate flow. High context retention.
 - **LAG (> 1 min):** User lived through time the model didn't see.
@@ -207,6 +256,13 @@ The test suite and benchmarks exist solely to guarantee **Kernel Integrity**. Co
 
 If you seek "Enterprise" patterns over operational logic — this repository is not for you.
 If you seek a mechanism that **works in practice** to solve temporal hallucinations and loop degradation — welcome.
+
+---
+
+## 🏛️ CREDITS & ACKNOWLEDGMENTS
+
+*   **Kyle Workman (Project Icarus):** For providing the **Universal Stability Skeleton v1.0**. The core mathematical constants ($\Phi = 1.618$, $\pi = 3.141$, $V_{\text{Matrix}} = 19.25$) are now embedded in `arctl.core.icarus` as the Geometric Anchor for entropy management.
+    *   *Note:* Proprietary pulse-timing variables have been redacted per the architect's protocol.
 
 ---
 

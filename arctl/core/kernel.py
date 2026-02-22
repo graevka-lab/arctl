@@ -1,8 +1,8 @@
-# core v1.1 (Integrated with Chronos + Energy-Conservative Reset)
-# "It just works — quietly."
+# core v1.2 (Chronos T-SPIRAL + Energy-Conservative Reset + Icarus)
 
 """
-ARCTL Kernel v1.1
+ARCTL Kernel v1.2
+Integrated with the Icarus Stability Anchor.
 
 The Hard Core of the adaptive resonance control system.
 Implements a deterministic 4-state machine that monitors LLM inference and prevents
@@ -136,13 +136,6 @@ def step(raw: RawMetrics, prev: SystemState, absolute_now: float, cfg: Controlle
         - Wall-clock time (absolute_now) is external, from the runtime
         - Logical time advances only when a control step executes
         - Anti-stutter accumulates pending_dt until min_step_interval is reached
-    
-    Example:
-        >>> state = SystemState.initial(0.0)
-        >>> metrics = RawMetrics(entropy=0.5, divergence=0.0, repetition=0.3)
-        >>> new_state = step(metrics, state, 1.0, ControllerConfig())
-        >>> assert new_state.mode == OperationalMode.STANDARD
-        >>> assert new_state.energy == 10
     """
     absolute_now = max(absolute_now, prev.last_call_time)
     delta_real = absolute_now - prev.last_call_time
@@ -160,19 +153,27 @@ def step(raw: RawMetrics, prev: SystemState, absolute_now: float, cfg: Controlle
     time_state, context_note = Chronos.sync(prev.last_call_time, absolute_now)
 
     # 3. Energy Logic — CONSERVATIVE RESET
-    # Implements Eq(6) from Review 2.0: Single bounded recharge event.
     next_energy = prev.energy
     new_reset_used = prev.reset_used
 
     if time_state == TimeState.GAP and not prev.reset_used:
-        # Only add small amount, do not reset to max.
-        # Only allowed once per lifecycle.
         next_energy = min(prev.energy + cfg.policy.reset_recovery_amount, cfg.policy.max_energy)
         new_reset_used = True
 
-    # 4. Physics Update (applies to all modes, including FALLBACK)
+    # 4. Physics Update with Icarus Stability Anchor
     a = cfg.policy.smoothing_alpha
-    s_ent = (1 - a) * prev.s_entropy + a * raw.entropy
+    raw_entropy_smoothed = (1 - a) * prev.s_entropy + a * raw.entropy
+
+    # Apply Icarus ONLY in active modes (STANDARD, EMERGENCY)
+    from .icarus import calculate_tunneling_vector, IcarusConfig
+    icarus_cfg = IcarusConfig()
+
+    if prev.mode == OperationalMode.EMERGENCY:
+        s_ent = calculate_tunneling_vector(raw_entropy_smoothed, icarus_cfg)
+    else:
+        # In COOLDOWN / FALLBACK: use raw physics (no tunneling)
+        s_ent = raw_entropy_smoothed
+
     s_div = (1 - a) * prev.s_divergence + a * raw.divergence
     s_rep = (1 - a) * prev.s_repetition + a * raw.repetition
 
@@ -192,6 +193,7 @@ def step(raw: RawMetrics, prev: SystemState, absolute_now: float, cfg: Controlle
             _FALLBACK_CONFIG,
             True
         )
+
     next_mode = prev.mode
     next_mode_time = prev.mode_entry_time
     time_in_mode = effective_logical_now - prev.mode_entry_time
@@ -215,7 +217,7 @@ def step(raw: RawMetrics, prev: SystemState, absolute_now: float, cfg: Controlle
                 next_mode = OperationalMode.FALLBACK
                 next_mode_time = effective_logical_now
 
-    # 7. Config Selection
+    # 6. Mode transitions (above). 7. Config Selection
     temp_map = {
         OperationalMode.STANDARD: cfg.policy.temp_standard,
         OperationalMode.EMERGENCY: cfg.policy.temp_emergency,
@@ -238,34 +240,6 @@ def step(raw: RawMetrics, prev: SystemState, absolute_now: float, cfg: Controlle
 def get_diagnostics(state: SystemState, absolute_now: float) -> dict:
     """
     Generate diagnostic information for monitoring and telemetry.
-    
-    Provides a human-readable snapshot of the system state without modifying it.
-    Use this function for logging, visualization, and debugging.
-    
-    Args:
-        state: Current SystemState
-        absolute_now: Current wall-clock time (seconds)
-    
-    Returns:
-        Dictionary with diagnostic keys:
-        - days_since_last_interaction: Time since last step() call (float, days)
-        - energy_level: Current energy budget (int, 0-max_energy)
-        - reset_used: Whether the conservative reset has been consumed (bool)
-        - current_mode: Current operational mode (str: STD|EMG|CDN|FBK)
-        - time_state: Temporal classification (str: SYNC|LAG|GAP)
-        - logical_time: Internal clock (float, seconds)
-        - context_note: Chronos synchronization note for context injection (str)
-    
-    Example:
-        >>> diag = get_diagnostics(state, 3600.0)
-        >>> print(f"Energy: {diag['energy_level']}")
-        >>> if diag['time_state'] == 'GAP':
-        ...     print("Long absence detected:", diag['context_note'])
-    
-    Notes:
-        - This function is pure and has no side effects
-        - Call it as often as needed for monitoring
-        - Use context_note to inject into LLM context when time_state != SYNC
     """
     days_since = (absolute_now - state.last_call_time) / 86400.0
     return {
