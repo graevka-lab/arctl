@@ -14,3 +14,4 @@ build/
 *.mp4
 .env
 .env.local
+.worktrees/
