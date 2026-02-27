@@ -1,0 +1,64 @@
+name: Feature Request
+description: Suggest a new feature or enhancement
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! arctl is an active project and we welcome ideas.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or Motivation
+      description: What problem does this feature solve? What's the use case?
+      placeholder: "When running arctl in a streaming inference loop, I need to..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the feature you'd like.
+      placeholder: "It would be helpful to have..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Feature Category
+      options:
+        - Kernel / State Machine
+        - Chronos / Temporal
+        - Icarus / Stability
+        - Resonance Engine
+        - Verification (lexical, metrics, uncertainty)
+        - Examples / Experiments
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Have you considered other approaches?
+
+  - type: dropdown
+    id: contribution
+    attributes:
+      label: Would you be willing to contribute this?
+      options:
+        - "Yes, I'd like to implement this"
+        - "Yes, with guidance"
+        - "No, but I'd help test it"
+        - "No"
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other context, references, or examples.
