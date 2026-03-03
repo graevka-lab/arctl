@@ -1,4 +1,4 @@
-# core v1.2 (Chronos T-SPIRAL + Energy-Conservative Reset + Icarus)
+# core v1.3 (Chronos T-SPIRAL + Energy-Conservative Reset + Icarus)
 
 """
 ARCTL Kernel v1.2
@@ -23,23 +23,22 @@ Key Features:
 
 Usage:
     from arctl.core.kernel import step, SystemState, ControllerConfig
-    
+
     config = ControllerConfig()
     state = SystemState.initial(0.0)
     metrics = RawMetrics(entropy=0.5, divergence=0.0, repetition=0.3)
-    
+
     new_state = step(metrics, state, now, config)
 
 Philosophy:
     "No hidden state. No infinite loops. No recovery without cost. Failure is explicit."
 """
 
-import math
-from typing import NamedTuple, Optional
 from dataclasses import dataclass, field
+from typing import NamedTuple, Optional
 
-from .states import OperationalMode, TimeState, RawMetrics, SamplingConfig
 from .chronos import Chronos
+from .states import OperationalMode, RawMetrics, SamplingConfig, TimeState
 
 # --- CONFIGURATION ---
 
@@ -83,14 +82,14 @@ class SystemState(NamedTuple):
     logical_time: float
     mode_entry_time: float
     pending_dt: float
-    
+
     # Chronos Fields
     time_state: TimeState
     context_note: str
-    
+
     # Energy-Conservative Reset Flag (Review 2.0 Compliance)
     reset_used: bool
-    
+
     active_config: Optional[SamplingConfig]
     step_performed: bool
 
@@ -112,26 +111,26 @@ class SystemState(NamedTuple):
 def step(raw: RawMetrics, prev: SystemState, absolute_now: float, cfg: ControllerConfig) -> SystemState:
     """
     Execute one kernel step: update metrics, check transitions, return new state.
-    
+
     This is the primary interface to the ARCTL kernel. It is pure: given identical inputs,
     it always produces identical outputs.
-    
+
     Args:
         raw: Raw metrics from the token stream (entropy, divergence, repetition)
         prev: Previous system state (immutable)
         absolute_now: Current wall-clock time (seconds, assumed monotonic)
         cfg: Configuration (timeouts, thresholds, smoothing parameters)
-    
+
     Returns:
         New SystemState with updated mode, energy, metrics, and diagnostics
-    
+
     Guarantees:
         - Deterministic: f(input) = same output every time
         - Idempotent: step(...) can be called multiple times safely
         - Anti-stutter: rapid calls < min_step_interval are buffered
         - Terminal: FALLBACK never transitions out
         - Bounded: energy is always in [0, max_energy]
-    
+
     Time Model:
         - Wall-clock time (absolute_now) is external, from the runtime
         - Logical time advances only when a control step executes
@@ -156,7 +155,8 @@ def step(raw: RawMetrics, prev: SystemState, absolute_now: float, cfg: Controlle
     next_energy = prev.energy
     new_reset_used = prev.reset_used
 
-    if time_state == TimeState.GAP and not prev.reset_used:
+    # Only update reset flag if not in FALLBACK state
+    if prev.mode != OperationalMode.FALLBACK and time_state == TimeState.GAP and not prev.reset_used:
         next_energy = min(prev.energy + cfg.policy.reset_recovery_amount, cfg.policy.max_energy)
         new_reset_used = True
 
@@ -165,7 +165,7 @@ def step(raw: RawMetrics, prev: SystemState, absolute_now: float, cfg: Controlle
     raw_entropy_smoothed = (1 - a) * prev.s_entropy + a * raw.entropy
 
     # Apply Icarus ONLY in active modes (STANDARD, EMERGENCY)
-    from .icarus import calculate_tunneling_vector, IcarusConfig
+    from .icarus import IcarusConfig, calculate_tunneling_vector
     icarus_cfg = IcarusConfig()
 
     if prev.mode == OperationalMode.EMERGENCY:
@@ -194,7 +194,7 @@ def step(raw: RawMetrics, prev: SystemState, absolute_now: float, cfg: Controlle
             True
         )
 
-    next_mode = prev.mode
+    next_mode: OperationalMode = prev.mode
     next_mode_time = prev.mode_entry_time
     time_in_mode = effective_logical_now - prev.mode_entry_time
 

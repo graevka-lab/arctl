@@ -4,10 +4,10 @@ Shows how the system extracts invariant truth across different cognitive modes.
 """
 
 import sys
-import os
 
 # --- PATH SETUP (Robust) ---
 from pathlib import Path
+
 # Get absolute path to the examples directory
 current_dir = Path(__file__).parent
 # Navigate up one level to the project root
@@ -21,6 +21,7 @@ if str(project_root) not in sys.path:
 # Now Python can see the 'arctl' package
 from arctl.engine.synthesizer import ResonanceSynthesizer
 from arctl.verification.metrics import ResonanceVerifier
+
 
 class MockModel:
     """
@@ -40,28 +41,28 @@ class MockModel:
 
 def main():
     print("🚀 Initializing Resonance Engine...")
-    
+
     # 1. Setup
-    model = MockModel() 
+    model = MockModel()
     synthesizer = ResonanceSynthesizer(model)
     verifier = ResonanceVerifier()
-    
+
     query = "What is PWM?"
     print(f"\nQuery: {query}")
-    
+
     # 2. Multi-Pass Generation
     print("-> Running Multi-Pass Synthesis...")
     multi_result = synthesizer.multi_synthesize(query, domain="technical")
-    
+
     # 3. Verification
     print("-> Verifying Semantic Invariance...")
     verification = verifier.verify(multi_result["responses"])
-    
+
     # 4. Report
     print("\n=== RESONANCE REPORT ===")
     print(f"Resonance Score: {verification.get('resonance_score', 0):.3f}")
     print(f"Stability: {'✅ STABLE' if verification.get('is_stable') else '⚠️ UNSTABLE'}")
-    
+
     print("\n=== PERSPECTIVES ===")
     for mode, response in multi_result["responses"].items():
         print(f"\n[{mode.upper()}]: {response}")

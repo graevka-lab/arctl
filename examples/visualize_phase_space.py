@@ -1,9 +1,9 @@
-import sys
 import os
-import numpy as np
+import sys
+
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.animation import FuncAnimation, PillowWriter
-from mpl_toolkits.mplot3d import Axes3D
 
 # --- PATH HACK ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -11,8 +11,8 @@ project_root = os.path.dirname(current_dir)
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from arctl.core.kernel import step, SystemState, ControllerConfig
-from arctl.core.states import RawMetrics, OperationalMode
+from arctl.core.kernel import ControllerConfig, SystemState, step
+from arctl.core.states import OperationalMode, RawMetrics
 
 # --- CONFIG ---
 STEPS = 200
@@ -36,8 +36,8 @@ history = {
 for t in range(STEPS):
     # Scenario: Waves of repetition
     # Sine wave input to trigger periodic emergencies
-    base_rep = 0.4 + 0.5 * np.sin(t * 0.1) 
-    
+    base_rep = 0.4 + 0.5 * np.sin(t * 0.1)
+
     # Feedback: If temp is high, repetition drops
     current_temp = state.active_config.temperature if state.active_config else 0.7
     if current_temp > 1.0:
@@ -46,11 +46,11 @@ for t in range(STEPS):
         real_rep = base_rep
 
     real_rep = np.clip(real_rep, 0.0, 1.0)
-    
+
     # Step
     metrics = RawMetrics(entropy=0.5, divergence=0.0, repetition=real_rep)
     state = step(metrics, state, float(t), cfg)
-    
+
     history["rep"].append(real_rep)
     history["energy"].append(state.energy)
     history["temp"].append(current_temp)
@@ -87,11 +87,11 @@ def animate(i):
     x = history["rep"][:i]
     y = history["energy"][:i]
     z = history["temp"][:i]
-    
+
     # Color logic based on mode (complex to animate line color in 3d, keeping simple blue)
     # But we change the "Head" color
     current_mode = history["mode"][i] if i < len(history["mode"]) else history["mode"][-1]
-    
+
     if current_mode == OperationalMode.EMERGENCY:
         head.set_color('#ff0000') # Red Hot
         head.set_markersize(15)
@@ -104,13 +104,13 @@ def animate(i):
 
     line.set_data(x, y)
     line.set_3d_properties(z)
-    
+
     head.set_data([x[-1]], [y[-1]]) if x else head.set_data([], [])
     head.set_3d_properties([z[-1]]) if z else head.set_3d_properties([])
-    
+
     # Rotate the camera for 3D effect
     ax.view_init(elev=20, azim=i * 0.5)
-    
+
     return line, head
 
 print(f"🎥 Rendering 3D Animation to {OUTPUT_FILE}...")

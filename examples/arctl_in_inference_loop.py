@@ -8,16 +8,15 @@ with your model's generate() or API to hook arctl into real inference.
 Run from project root: python examples/arctl_in_inference_loop.py
 """
 
-import sys
 import os
+import sys
 from dataclasses import replace
 
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from arctl.core.kernel import step, SystemState, ControllerConfig, get_diagnostics
-from arctl.core.states import RawMetrics
+from arctl.core.kernel import ControllerConfig, SystemState, step
 from arctl.verification.lexical import LexicalMetrics
 
 
@@ -66,15 +65,13 @@ def main():
     for i, (state, temp) in enumerate(arctl_loop(stream, time_step=0.1)):
         step_count = i
         if i <= 15 or state.mode.value != "STD" or i % 20 == 0:
-            print("  {:4} | {:8} | {:6} | {:.3f} | {:.3f}".format(
-                i, state.mode.value, state.energy, temp, state.s_repetition))
+            print(f"  {i:4} | {state.mode.value:8} | {state.energy:6} | {temp:.3f} | {state.s_repetition:.3f}")
         if state.mode.value == "FBK":
             print("  ... (FALLBACK reached)")
             break
     if step_count > 20 and state.mode.value != "FBK":
         print("  ...")
-        print("  {:4} | {:8} | {:6} | {:.3f} | {:.3f}".format(
-            step_count, state.mode.value, state.energy, temp, state.s_repetition))
+        print(f"  {step_count:4} | {state.mode.value:8} | {state.energy:6} | {temp:.3f} | {state.s_repetition:.3f}")
 
     print("\nUse this pattern to plug arctl into your inference:")
     print("  for state, temperature in arctl_loop(my_token_iterator, cfg):")

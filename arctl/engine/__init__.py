@@ -1,8 +1,8 @@
 """Engine components: resonance synthesis and semantic steering"""
 
-from .synthesizer import ResonanceSynthesizer, ModelInterface
+from .synthesizer import ModelInterface, ResonanceSynthesizer
 
 __all__ = [
-    "ResonanceSynthesizer",
     "ModelInterface",
+    "ResonanceSynthesizer",
 ]

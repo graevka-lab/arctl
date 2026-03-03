@@ -16,9 +16,9 @@ class UncertaintyScorer:
         """Returns a score from 0.0 (Confident) to 1.0 (Refusal/Unknown)."""
         text_lower = text.lower()
         max_score = 0.0
-        
+
         for phrase, weight in UncertaintyScorer.MARKERS.items():
             if phrase in text_lower:
                 max_score = max(max_score, weight)
-                
+
         return max_score

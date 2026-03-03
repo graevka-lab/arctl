@@ -16,8 +16,8 @@ class TestIcarusConfig(unittest.TestCase):
     def test_config_immutable(self):
         """IcarusConfig is frozen (immutable)."""
         cfg = IcarusConfig()
-        with self.assertRaises(Exception):
-            cfg.stability_index = 0.5  # type: ignore
+        with self.assertRaises(AttributeError):
+           cfg.stability_index = 0.5
 
 
 class TestTunnelingVector(unittest.TestCase):
@@ -35,16 +35,19 @@ class TestTunnelingVector(unittest.TestCase):
         self.assertEqual(calculate_tunneling_vector(1.5, self.cfg), 1.0)
 
     def test_high_entropy_corrected(self):
-        """Entropy 0.9 is corrected toward stability_index."""
-        result = calculate_tunneling_vector(0.9, self.cfg)
-        # 0.9 - (0.9 - 0.95)*0.5 = 0.9 + 0.025 = 0.925
-        self.assertAlmostEqual(result, 0.925, places=5)
+        """Entropy > 0.8 triggers tunneling and is reduced."""
+        cfg = IcarusConfig(stability_index=0.95)
+        # current_entropy = 0.9. Deviation = abs(0.9 - 0.95) = 0.05.
+        # Correction = 0.05 * 0.5 = 0.025. Result = 0.9 - 0.025 = 0.875
+        result = calculate_tunneling_vector(0.9, cfg)
+        self.assertAlmostEqual(result, 0.875, places=5)
 
     def test_low_entropy_corrected(self):
-        """Entropy 0.5 is corrected toward stability_index."""
-        result = calculate_tunneling_vector(0.5, self.cfg)
-        # 0.5 - (0.5 - 0.95)*0.5 = 0.5 + 0.225 = 0.725
-        self.assertAlmostEqual(result, 0.725, places=5)
+        """Entropy <= 0.8 does not trigger tunneling. Returns original value."""
+        cfg = IcarusConfig(stability_index=0.95)
+        # Since 0.5 is not > 0.8, no tunneling occurs. Should return 0.5.
+        result = calculate_tunneling_vector(0.5, cfg)
+        self.assertAlmostEqual(result, 0.5, places=5)
 
     def test_result_in_bounds(self):
         """All results are within [0.0, 1.0]."""

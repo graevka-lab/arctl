@@ -21,7 +21,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Tuple
 
 from .states import TimeState
 
@@ -111,7 +110,7 @@ class Chronos:
     """Temporal sync: classifies gaps (SYNC/LAG/GAP) and builds context notes using 8-layer time."""
 
     @staticmethod
-    def sync(prev_ts: float, current_ts: float) -> Tuple[TimeState, str]:
+    def sync(prev_ts: float, current_ts: float) -> tuple[TimeState, str]:
         """
         Classify time gap and generate context note. Uses current_ts as CURSOR (NOW).
         Returns (TimeState, note); note is empty for SYNC.

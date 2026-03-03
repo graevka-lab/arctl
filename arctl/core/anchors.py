@@ -3,8 +3,6 @@ Instructional Anchors v2.0
 Cognitive protocols for latent space steering.
 """
 
-from typing import Dict
-
 COGNITIVE_MODES = {
     "calm": {
         "name": "Analytical Clarity",
@@ -51,12 +49,12 @@ COGNITIVE_MODES = {
 def get_anchor(mode: str) -> str:
     if mode not in COGNITIVE_MODES:
         return ""
-    
+
     config = COGNITIVE_MODES[mode]
     instructions = "\n".join(f"• {instr}" for instr in config["instructions"])
     return f"[COGNITIVE MODE: {config['name']}]\n{instructions}"
+def blend_anchors(mode_weights: dict[str, float], max_modes: int = 3) -> str:
 
-def blend_anchors(mode_weights: Dict[str, float], max_modes: int = 3) -> str:
     """
     Creates a composite system prompt based on weighted modes.
     """
@@ -66,14 +64,14 @@ def blend_anchors(mode_weights: Dict[str, float], max_modes: int = 3) -> str:
         reverse=True
     )
     selected_modes = sorted_modes[:max_modes]
-    
+
     if not selected_modes:
         return ""
-    
+
     combined_parts = []
     for mode, _ in selected_modes:
         anchor = get_anchor(mode)
         if anchor:
             combined_parts.append(anchor)
-    
+
     return "\n\n".join(combined_parts)

@@ -51,7 +51,6 @@ select = ["E", "F", "I", "N", "W", "UP", "B", "RUF", "C4"]
 ignore = ["E501"]
 
 [tool.ruff.format]
-line-length = 100
 
 [tool.mypy]
 python_version = "3.9"

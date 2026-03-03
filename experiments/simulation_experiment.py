@@ -5,16 +5,16 @@ Produces a reproducible table and summary. No GPU or API required.
 Run from project root: python experiments/simulation_experiment.py
 """
 
-import sys
 import os
+import sys
 from dataclasses import replace
 
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from arctl.core.kernel import step, SystemState, ControllerConfig
-from arctl.core.states import RawMetrics, OperationalMode
+from arctl.core.kernel import ControllerConfig, SystemState, step
+from arctl.core.states import OperationalMode, RawMetrics
 
 
 def run_uncontrolled(metrics_stream, steps):
@@ -57,7 +57,7 @@ def main():
     avg_high_rep = sum(rep_after_10) / len(rep_after_10) if rep_after_10 else 0
 
     print("\n1. WITHOUT arctl (uncontrolled)")
-    print("   Repetition from step 10 onward: constant high (avg = {:.3f})".format(avg_high_rep))
+    print(f"   Repetition from step 10 onward: constant high (avg = {avg_high_rep:.3f})")
     print("   No mode transitions, no intervention.")
 
     # With arctl
@@ -82,7 +82,7 @@ def main():
     for i in range(8, min(26, len(hist))):
         _, mode, energy, srep = hist[i]
         m_rep = metrics_stream[i].repetition
-        print("   {:4} | {:17.3f} | {:12} | {:5}".format(i, m_rep, mode.value, energy))
+        print(f"   {i:4} | {m_rep:17.3f} | {mode.value:12} | {energy:5}")
 
     print("\n" + "=" * 60)
     print("Summary: arctl forces EMERGENCY -> COOLDOWN -> STANDARD or FALLBACK;")

@@ -3,10 +3,11 @@ Telemetry Simulation: Real-time ARCTL monitoring.
 Visualizes repetition triggers and temperature intervention.
 """
 
-import sys
 import os
-import numpy as np
+import sys
+
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.animation import FuncAnimation, PillowWriter
 
 # --- PATH SETUP ---
@@ -15,8 +16,8 @@ project_root = os.path.dirname(current_dir)
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from arctl.core.kernel import step, SystemState, ControllerConfig
-from arctl.core.states import RawMetrics, OperationalMode
+from arctl.core.kernel import ControllerConfig, SystemState, step
+from arctl.core.states import OperationalMode, RawMetrics
 
 # --- CONFIG ---
 STEPS = 150
@@ -51,11 +52,11 @@ for t in range(STEPS):
             base_rep = 0.9 # Stuck
 
     base_rep = np.clip(base_rep, 0.0, 1.0)
-    
+
     # Step (Simulate 0.1s per step)
     metrics = RawMetrics(entropy=0.5, divergence=0.0, repetition=base_rep)
     state = step(metrics, state, float(t) * 0.1, cfg)
-    
+
     time_points.append(state.logical_time)
     rep_vals.append(base_rep)
     temp_vals.append(state.active_config.temperature if state.active_config else 0.7)
@@ -94,10 +95,10 @@ def animate(i):
     x = time_points[:i]
     y_rep = rep_vals[:i]
     y_temp = temp_vals[:i]
-    
+
     line_rep.set_data(x, y_rep)
     line_temp.set_data(x, y_temp)
-    
+
     # Smart Sliding Window
     if x:
         current_time = x[-1]
@@ -107,7 +108,7 @@ def animate(i):
         else:
             ax1.set_xlim(0, WINDOW_SIZE)
             ax2.set_xlim(0, WINDOW_SIZE)
-    
+
     # Mode Status
     mode = modes[i] if i < len(modes) else modes[-1]
     if mode == OperationalMode.EMERGENCY:
@@ -120,7 +121,7 @@ def animate(i):
     else:
         status_text.set_text("(OK) STANDARD")
         status_text.set_color('#00ff00')
-        
+
     return line_rep, line_temp, status_text
 
 print(f"🎥 Rendering {OUTPUT_FILE}...")
