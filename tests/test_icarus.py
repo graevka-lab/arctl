@@ -1,5 +1,6 @@
 # test_icarus.py
 """Unit tests for Project Icarus stability anchor (arctl.core.icarus)."""
+
 import unittest
 
 from arctl.core.icarus import IcarusConfig, calculate_tunneling_vector
@@ -17,7 +18,7 @@ class TestIcarusConfig(unittest.TestCase):
         """IcarusConfig is frozen (immutable)."""
         cfg = IcarusConfig()
         with self.assertRaises(AttributeError):
-           cfg.stability_index = 0.5
+            cfg.stability_index = 0.5
 
 
 class TestTunnelingVector(unittest.TestCase):

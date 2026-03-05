@@ -38,13 +38,11 @@ class TestKernelWithLexicalMetrics(unittest.TestCase):
         metrics = RawMetrics(
             entropy=lex_metrics.entropy,
             divergence=lex_metrics.divergence,
-            repetition=lex_metrics.repetition
+            repetition=lex_metrics.repetition,
         )
 
         # Use fast config for instant updates
-        cfg_fast = ControllerConfig(
-            policy=replace(cfg.policy, smoothing_alpha=1.0)
-        )
+        cfg_fast = ControllerConfig(policy=replace(cfg.policy, smoothing_alpha=1.0))
 
         # Step with high repetition
         new_state = step(metrics, state, 1.0, cfg_fast)
@@ -54,9 +52,7 @@ class TestKernelWithLexicalMetrics(unittest.TestCase):
 
     def test_diverse_tokens_stay_standard(self):
         """Diverse token sequence (low repetition) should keep system in STANDARD"""
-        cfg = ControllerConfig(
-            policy=replace(ControllerConfig().policy, smoothing_alpha=1.0)
-        )
+        cfg = ControllerConfig(policy=replace(ControllerConfig().policy, smoothing_alpha=1.0))
         state = SystemState.initial(0.0)
 
         # Many unique tokens → low n-gram repetition
@@ -66,12 +62,15 @@ class TestKernelWithLexicalMetrics(unittest.TestCase):
         metrics = RawMetrics(
             entropy=lex_metrics.entropy,
             divergence=lex_metrics.divergence,
-            repetition=lex_metrics.repetition
+            repetition=lex_metrics.repetition,
         )
         new_state = step(metrics, state, 1.0, cfg)
 
-        self.assertLessEqual(new_state.s_repetition, cfg.policy.repetition_threshold,
-                             "unique token sequence should have low repetition")
+        self.assertLessEqual(
+            new_state.s_repetition,
+            cfg.policy.repetition_threshold,
+            "unique token sequence should have low repetition",
+        )
         self.assertEqual(new_state.mode, OperationalMode.STANDARD)
 
 
@@ -83,9 +82,7 @@ class TestFullWorkflow(unittest.TestCase):
         Test realistic degradation sequence:
         STANDARD → repetition rises → EMERGENCY → timeout → COOLDOWN → STANDARD
         """
-        cfg = ControllerConfig(
-            policy=replace(ControllerConfig().policy, smoothing_alpha=1.0)
-        )
+        cfg = ControllerConfig(policy=replace(ControllerConfig().policy, smoothing_alpha=1.0))
         state = SystemState.initial(0.0)
         now = 0.0
 
@@ -136,7 +133,7 @@ class TestResonanceIntegration(unittest.TestCase):
             "calm": "PWM is a technique that controls analog circuits using digital pulses.",
             "joy": "PWM is a fun technique that controls circuits with digital pulses!",
             "vigilance": "PWM controls circuits through digital pulses (ensure proper filtering).",
-            "wonder": "PWM, a fascinating technique, controls circuits via digital pulses."
+            "wonder": "PWM, a fascinating technique, controls circuits via digital pulses.",
         }
 
         # Verify consistency
@@ -175,9 +172,7 @@ class TestLongRunningBehavior(unittest.TestCase):
 
     def test_energy_depletion_reaches_fallback(self):
         """Over many EMERGENCY transitions, energy depletes to FALLBACK"""
-        cfg = ControllerConfig(
-            policy=replace(ControllerConfig().policy, smoothing_alpha=1.0)
-        )
+        cfg = ControllerConfig(policy=replace(ControllerConfig().policy, smoothing_alpha=1.0))
         state = SystemState.initial(0.0)
         high_rep = RawMetrics(entropy=0.5, divergence=0.0, repetition=0.9)
         low_rep = RawMetrics(entropy=0.5, divergence=0.0, repetition=0.1)
@@ -243,5 +238,5 @@ class TestErrorRecovery(unittest.TestCase):
         self.assertEqual(new_state.time_state, TimeState.GAP)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

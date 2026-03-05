@@ -11,5 +11,5 @@ __all__ = [
     "RawMetrics",
     "ResonanceSynthesizer",
     "SystemState",
-    "step"
+    "step",
 ]

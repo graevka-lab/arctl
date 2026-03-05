@@ -9,16 +9,19 @@ class OperationalMode(Enum):
     COOLDOWN = "CDN"
     FALLBACK = "FBK"
 
+
 class TimeState(Enum):
-    SYNC = "SYNC"       # < 1 min
-    LAG = "LAG"         # > 1 min
-    GAP = "GAP"         # > 24 hours
+    SYNC = "SYNC"  # < 1 min
+    LAG = "LAG"  # > 1 min
+    GAP = "GAP"  # > 24 hours
+
 
 @dataclass(frozen=True)
 class RawMetrics:
     entropy: float
     divergence: float
     repetition: float
+
 
 class SamplingConfig(NamedTuple):
     temperature: float

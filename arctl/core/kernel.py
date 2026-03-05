@@ -42,11 +42,13 @@ from .states import OperationalMode, RawMetrics, SamplingConfig, TimeState
 
 # --- CONFIGURATION ---
 
+
 @dataclass(frozen=True)
 class TimeConfig:
     min_step_interval: float = 0.01
     max_step_interval: float = 0.1
     deadlock_timeout: float = 5.0
+
 
 @dataclass(frozen=True)
 class PolicyConfig:
@@ -63,14 +65,17 @@ class PolicyConfig:
     temp_cooldown: float = 0.5
     temp_fallback: float = 0.1
 
+
 @dataclass(frozen=True)
 class ControllerConfig:
     time: TimeConfig = field(default_factory=TimeConfig)
     policy: PolicyConfig = field(default_factory=PolicyConfig)
 
+
 # --- STATE ---
 
 _FALLBACK_CONFIG = SamplingConfig(0.1)
+
 
 class SystemState(NamedTuple):
     s_entropy: float
@@ -94,21 +99,31 @@ class SystemState(NamedTuple):
     step_performed: bool
 
     @staticmethod
-    def initial(now: float) -> 'SystemState':
+    def initial(now: float) -> "SystemState":
         return SystemState(
-            0.5, 0.0, 0.0,
+            0.5,
+            0.0,
+            0.0,
             OperationalMode.STANDARD,
             10,
-            now, 0.0, 0.0, 0.0,
-            TimeState.SYNC, "",
+            now,
+            0.0,
+            0.0,
+            0.0,
+            TimeState.SYNC,
+            "",
             False,  # reset_used starts as False
             SamplingConfig(0.7),
-            True
+            True,
         )
+
 
 # --- KERNEL ---
 
-def step(raw: RawMetrics, prev: SystemState, absolute_now: float, cfg: ControllerConfig) -> SystemState:
+
+def step(
+    raw: RawMetrics, prev: SystemState, absolute_now: float, cfg: ControllerConfig
+) -> SystemState:
     """
     Execute one kernel step: update metrics, check transitions, return new state.
 
@@ -142,7 +157,12 @@ def step(raw: RawMetrics, prev: SystemState, absolute_now: float, cfg: Controlle
 
     # 1. Anti-Stutter
     if new_pending < cfg.time.min_step_interval:
-        return prev._replace(last_call_time=absolute_now, pending_dt=new_pending, step_performed=False, active_config=None)
+        return prev._replace(
+            last_call_time=absolute_now,
+            pending_dt=new_pending,
+            step_performed=False,
+            active_config=None,
+        )
 
     dt = min(new_pending, cfg.time.max_step_interval)
     remaining_dt = new_pending - dt
@@ -156,7 +176,11 @@ def step(raw: RawMetrics, prev: SystemState, absolute_now: float, cfg: Controlle
     new_reset_used = prev.reset_used
 
     # Only update reset flag if not in FALLBACK state
-    if prev.mode != OperationalMode.FALLBACK and time_state == TimeState.GAP and not prev.reset_used:
+    if (
+        prev.mode != OperationalMode.FALLBACK
+        and time_state == TimeState.GAP
+        and not prev.reset_used
+    ):
         next_energy = min(prev.energy + cfg.policy.reset_recovery_amount, cfg.policy.max_energy)
         new_reset_used = True
 
@@ -166,6 +190,7 @@ def step(raw: RawMetrics, prev: SystemState, absolute_now: float, cfg: Controlle
 
     # Apply Icarus ONLY in active modes (STANDARD, EMERGENCY)
     from .icarus import IcarusConfig, calculate_tunneling_vector
+
     icarus_cfg = IcarusConfig()
 
     if prev.mode == OperationalMode.EMERGENCY:
@@ -180,7 +205,9 @@ def step(raw: RawMetrics, prev: SystemState, absolute_now: float, cfg: Controlle
     # 5. Fallback Check — IRREVERSIBLE (mode frozen, but metrics update)
     if prev.mode == OperationalMode.FALLBACK:
         return SystemState(
-            s_ent, s_div, s_rep,
+            s_ent,
+            s_div,
+            s_rep,
             OperationalMode.FALLBACK,
             0,  # Energy frozen at 0 in FALLBACK
             absolute_now,
@@ -191,7 +218,7 @@ def step(raw: RawMetrics, prev: SystemState, absolute_now: float, cfg: Controlle
             context_note,
             new_reset_used,
             _FALLBACK_CONFIG,
-            True
+            True,
         )
 
     next_mode: OperationalMode = prev.mode
@@ -229,13 +256,22 @@ def step(raw: RawMetrics, prev: SystemState, absolute_now: float, cfg: Controlle
     next_energy = max(0, min(cfg.policy.max_energy, next_energy))
 
     return SystemState(
-        s_ent, s_div, s_rep,
-        next_mode, next_energy,
-        absolute_now, effective_logical_now, next_mode_time, remaining_dt,
-        time_state, context_note,
+        s_ent,
+        s_div,
+        s_rep,
+        next_mode,
+        next_energy,
+        absolute_now,
+        effective_logical_now,
+        next_mode_time,
+        remaining_dt,
+        time_state,
+        context_note,
         new_reset_used,
-        config, True
+        config,
+        True,
     )
+
 
 def get_diagnostics(state: SystemState, absolute_now: float) -> dict:
     """
@@ -243,11 +279,11 @@ def get_diagnostics(state: SystemState, absolute_now: float) -> dict:
     """
     days_since = (absolute_now - state.last_call_time) / 86400.0
     return {
-        'days_since_last_interaction': round(days_since, 2),
-        'energy_level': state.energy,
-        'reset_used': state.reset_used,
-        'current_mode': state.mode.value,
-        'time_state': state.time_state.value,
-        'logical_time': state.logical_time,
-        'context_note': state.context_note
+        "days_since_last_interaction": round(days_since, 2),
+        "energy_level": state.energy,
+        "reset_used": state.reset_used,
+        "current_mode": state.mode.value,
+        "time_state": state.time_state.value,
+        "logical_time": state.logical_time,
+        "context_note": state.context_note,
     }

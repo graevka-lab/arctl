@@ -13,6 +13,7 @@ import numpy as np
 # Optional dependency check
 try:
     from sentence_transformers import SentenceTransformer
+
     HAS_TRANSFORMERS = True
 except ImportError:
     HAS_TRANSFORMERS = False
@@ -24,7 +25,7 @@ if TYPE_CHECKING:
 class ResonanceVerifier:
     embedder: SentenceTransformer | None
 
-    def __init__(self, model_name: str = 'all-MiniLM-L6-v2'):
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
         if HAS_TRANSFORMERS:
             self.embedder = SentenceTransformer(model_name)
         else:
@@ -33,10 +34,12 @@ class ResonanceVerifier:
 
     def _split_into_claims(self, text: str) -> list[str]:
         # Improved regex splitting to handle abbreviations better than simple dot split
-        sentences = re.split(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s', text)
+        sentences = re.split(r"(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s", text)
         return [s.strip() for s in sentences if len(s.strip()) > 10][:3]  # Top 3 substantial claims
 
-    def _calculate_pairwise_similarity(self, embeddings1: np.ndarray, embeddings2: np.ndarray) -> float:
+    def _calculate_pairwise_similarity(
+        self, embeddings1: np.ndarray, embeddings2: np.ndarray
+    ) -> float:
         """Calculate cosine similarity between two sets of embeddings with proper error handling."""
         if len(embeddings1) == 0 or len(embeddings2) == 0:
             return 0.0
@@ -63,7 +66,7 @@ class ResonanceVerifier:
             return {
                 "resonance_score": 0.0,
                 "is_stable": False,
-                "error": "Insufficient data or missing libs"
+                "error": "Insufficient data or missing libs",
             }
 
         key_claims = {}
@@ -83,8 +86,7 @@ class ResonanceVerifier:
         for i in range(len(modes)):
             for j in range(i + 1, len(modes)):
                 sim = self._calculate_pairwise_similarity(
-                    all_embeddings[modes[i]],
-                    all_embeddings[modes[j]]
+                    all_embeddings[modes[i]], all_embeddings[modes[j]]
                 )
                 similarities_list.append(sim)
 
@@ -100,5 +102,5 @@ class ResonanceVerifier:
             "is_stable": bool(resonance_score > 0.7),
             "variance": float(variance),
             "mean_similarity": float(mean_similarity),
-            "tested_modes": modes
+            "tested_modes": modes,
         }

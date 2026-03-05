@@ -39,19 +39,24 @@ class TestDiagnostics(unittest.TestCase):
         state = SystemState.initial(100.0)
         diag = get_diagnostics(state, 100.0 + 3600.0)  # 1 hour later
         required = {
-            'days_since_last_interaction', 'energy_level', 'reset_used',
-            'current_mode', 'time_state', 'logical_time', 'context_note'
+            "days_since_last_interaction",
+            "energy_level",
+            "reset_used",
+            "current_mode",
+            "time_state",
+            "logical_time",
+            "context_note",
         }
         self.assertEqual(set(diag.keys()), required)
-        self.assertIsInstance(diag['days_since_last_interaction'], (int, float))
-        self.assertIsInstance(diag['energy_level'], int)
-        self.assertIsInstance(diag['reset_used'], bool)
-        self.assertIsInstance(diag['current_mode'], str)
-        self.assertIsInstance(diag['time_state'], str)
-        self.assertIsInstance(diag['logical_time'], (int, float))
-        self.assertIsInstance(diag['context_note'], str)
-        self.assertGreaterEqual(diag['energy_level'], 0)
-        self.assertLessEqual(diag['energy_level'], 10)
+        self.assertIsInstance(diag["days_since_last_interaction"], (int, float))
+        self.assertIsInstance(diag["energy_level"], int)
+        self.assertIsInstance(diag["reset_used"], bool)
+        self.assertIsInstance(diag["current_mode"], str)
+        self.assertIsInstance(diag["time_state"], str)
+        self.assertIsInstance(diag["logical_time"], (int, float))
+        self.assertIsInstance(diag["context_note"], str)
+        self.assertGreaterEqual(diag["energy_level"], 0)
+        self.assertLessEqual(diag["energy_level"], 10)
 
 
 class TestKernelBasics(unittest.TestCase):
@@ -89,9 +94,7 @@ class TestStateMachine(unittest.TestCase):
     def setUp(self):
         """Initialize test fixtures"""
         # Use alpha=1.0 for instant metric updates (easier to test)
-        self.cfg = ControllerConfig(
-            policy=PolicyConfig(smoothing_alpha=1.0)
-        )
+        self.cfg = ControllerConfig(policy=PolicyConfig(smoothing_alpha=1.0))
         self.state = SystemState.initial(0.0)
 
     def test_standard_to_emergency_transition(self):
@@ -116,9 +119,7 @@ class TestStateMachine(unittest.TestCase):
 
         # Start in EMERGENCY at logical_time=0, mode_entry_time=0
         emergency_state = self.state._replace(
-            mode=OperationalMode.EMERGENCY,
-            mode_entry_time=0.0,
-            logical_time=0.0
+            mode=OperationalMode.EMERGENCY, mode_entry_time=0.0, logical_time=0.0
         )
 
         metrics = RawMetrics(entropy=0.5, divergence=0.0, repetition=0.3)
@@ -137,10 +138,7 @@ class TestStateMachine(unittest.TestCase):
         """COOLDOWN → STANDARD after duration + energy recovery"""
         # Create state in COOLDOWN with correct entry time
         cooldown_state = self.state._replace(
-            mode=OperationalMode.COOLDOWN,
-            energy=7,
-            mode_entry_time=0.0,
-            logical_time=0.0
+            mode=OperationalMode.COOLDOWN, energy=7, mode_entry_time=0.0, logical_time=0.0
         )
 
         metrics = RawMetrics(entropy=0.5, divergence=0.0, repetition=0.3)
@@ -162,7 +160,7 @@ class TestStateMachine(unittest.TestCase):
         # Deplete energy to near zero
         depleted_state = self.state._replace(
             mode=OperationalMode.STANDARD,
-            energy=2  # < 3 (emergency_cost)
+            energy=2,  # < 3 (emergency_cost)
         )
 
         # High repetition triggers emergency attempt
@@ -180,9 +178,7 @@ class TestStateMachine(unittest.TestCase):
         metrics_low = RawMetrics(entropy=0.5, divergence=0.0, repetition=0.2)
 
         # Use config with fast smoothing for this test
-        cfg_fast = ControllerConfig(
-            policy=replace(self.cfg.policy, smoothing_alpha=1.0)
-        )
+        cfg_fast = ControllerConfig(policy=replace(self.cfg.policy, smoothing_alpha=1.0))
 
         # Step 1: Trigger EMERGENCY at time > initial (need to pass anti-stutter check)
         state = step(metrics_high, state, 0.02, cfg_fast)  # > min_step_interval (0.01)
@@ -213,10 +209,7 @@ class TestFallbackTerminal(unittest.TestCase):
     def test_fallback_is_terminal(self):
         """FALLBACK never transitions out - terminal absorbing state"""
         # Create state in FALLBACK
-        fallback_state = SystemState.initial(0.0)._replace(
-            mode=OperationalMode.FALLBACK,
-            energy=0
-        )
+        fallback_state = SystemState.initial(0.0)._replace(mode=OperationalMode.FALLBACK, energy=0)
 
         metrics_normal = RawMetrics(entropy=0.5, divergence=0.0, repetition=0.2)
         metrics_high = RawMetrics(entropy=0.5, divergence=0.0, repetition=0.9)
@@ -224,30 +217,17 @@ class TestFallbackTerminal(unittest.TestCase):
         # Try 100 steps with various metrics - mode should never change
         state = fallback_state
         for t in range(100):
-            state = step(
-                metrics_high if t % 2 else metrics_normal,
-                state,
-                float(t),
-                self.cfg
-            )
+            state = step(metrics_high if t % 2 else metrics_normal, state, float(t), self.cfg)
 
             self.assertEqual(
-                state.mode,
-                OperationalMode.FALLBACK,
-                f"FALLBACK was exited at step {t}!"
+                state.mode, OperationalMode.FALLBACK, f"FALLBACK was exited at step {t}!"
             )
-            self.assertEqual(
-                state.energy,
-                0,
-                f"Energy was modified at step {t}!"
-            )
+            self.assertEqual(state.energy, 0, f"Energy was modified at step {t}!")
 
     def test_fallback_physics_still_updates(self):
         """Even in FALLBACK, physics metrics are updated"""
         fallback_state = SystemState.initial(0.0)._replace(
-            mode=OperationalMode.FALLBACK,
-            s_entropy=0.5,
-            s_repetition=0.0
+            mode=OperationalMode.FALLBACK, s_entropy=0.5, s_repetition=0.0
         )
 
         # High repetition metric
@@ -310,13 +290,8 @@ class TestMetricSmoothing(unittest.TestCase):
 
     def test_smoothing_alpha_zero(self):
         """With alpha=0, metrics don't change"""
-        cfg = ControllerConfig(
-            policy=PolicyConfig(smoothing_alpha=0.0)
-        )
-        state = SystemState.initial(0.0)._replace(
-            s_entropy=0.5,
-            s_repetition=0.2
-        )
+        cfg = ControllerConfig(policy=PolicyConfig(smoothing_alpha=0.0))
+        state = SystemState.initial(0.0)._replace(s_entropy=0.5, s_repetition=0.2)
 
         # Very different incoming metrics
         metrics = RawMetrics(entropy=0.95, divergence=0.9, repetition=0.95)
@@ -329,9 +304,7 @@ class TestMetricSmoothing(unittest.TestCase):
 
     def test_smoothing_alpha_one(self):
         """With alpha=1.0, metrics instantly update"""
-        cfg = ControllerConfig(
-            policy=PolicyConfig(smoothing_alpha=1.0)
-        )
+        cfg = ControllerConfig(policy=PolicyConfig(smoothing_alpha=1.0))
         state = SystemState.initial(0.0)
 
         metrics = RawMetrics(entropy=0.9, divergence=0.8, repetition=0.7)
@@ -463,9 +436,7 @@ class TestEdgeCases(unittest.TestCase):
         """Cannot enter EMERGENCY with zero energy"""
         zero_energy_state = self.state._replace(energy=0)
 
-        cfg_fast = ControllerConfig(
-            policy=PolicyConfig(smoothing_alpha=1.0)
-        )
+        cfg_fast = ControllerConfig(policy=PolicyConfig(smoothing_alpha=1.0))
 
         # High repetition
         metrics = RawMetrics(entropy=0.5, divergence=0.0, repetition=0.9)
@@ -478,10 +449,7 @@ class TestEdgeCases(unittest.TestCase):
     def test_metric_boundaries(self):
         """Metrics stay in [0, 1] range"""
         # Inject boundary values
-        state = self.state._replace(
-            s_entropy=1.0,
-            s_repetition=0.0
-        )
+        state = self.state._replace(s_entropy=1.0, s_repetition=0.0)
 
         metrics = RawMetrics(entropy=1.0, divergence=0.0, repetition=0.0)
 
@@ -505,5 +473,5 @@ class TestEdgeCases(unittest.TestCase):
             self.assertLessEqual(state.energy, self.cfg.policy.max_energy)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

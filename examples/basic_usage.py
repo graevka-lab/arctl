@@ -31,9 +31,7 @@ def main() -> None:
     print("Step 1: Initialize the kernel")
     print("-" * 70)
     # Use fast smoothing (alpha=1.0) for demo clarity
-    config = ControllerConfig(
-        policy=replace(ControllerConfig().policy, smoothing_alpha=1.0)
-    )
+    config = ControllerConfig(policy=replace(ControllerConfig().policy, smoothing_alpha=1.0))
     state = SystemState.initial(0.0)
     current_time = 0.0
 
@@ -49,8 +47,10 @@ def main() -> None:
     for i in range(3):
         current_time += 0.02  # Increment by at least min_step_interval
         state = step(normal_metrics, state, current_time, config)
-        print(f"  Step {i+1}: mode={state.mode.value}, energy={state.energy}, "
-              f"repetition={state.s_repetition:.3f}")
+        print(
+            f"  Step {i + 1}: mode={state.mode.value}, energy={state.energy}, "
+            f"repetition={state.s_repetition:.3f}"
+        )
     print()
 
     # 3. Trigger emergency (high repetition)
@@ -114,5 +114,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"[ERROR] {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

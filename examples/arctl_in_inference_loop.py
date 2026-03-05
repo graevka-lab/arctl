@@ -5,10 +5,13 @@ temperature/config. Uses synthetic tokens here; replace the token source
 with your model's generate() or API to hook arctl into real inference.
 Run from project root: python examples/arctl_in_inference_loop.py
 """
+
 import os
 import sys
+from collections.abc import Generator
 from dataclasses import replace
-from typing import Generator, Tuple, List, Optional
+from typing import List, Optional, Tuple
+
 from arctl.core.kernel import ControllerConfig, SystemState, step
 from arctl.verification.lexical import LexicalMetrics
 
@@ -26,15 +29,13 @@ def arctl_loop(
 ) -> Generator[Tuple[SystemState, float], None, None]:
     """
     Run arctl on a stream of tokens. Yields (state, temperature) each step.
-    
+
     token_stream: list of token strings (or iterator); we consume in chunks.
     cfg: ControllerConfig (default: fast smoothing for demo).
     window: tokens per step for LexicalMetrics.
     time_step: seconds per step (>= min_step_interval).
     """
-    cfg = cfg or ControllerConfig(
-        policy=replace(ControllerConfig().policy, smoothing_alpha=1.0)
-    )
+    cfg = cfg or ControllerConfig(policy=replace(ControllerConfig().policy, smoothing_alpha=1.0))
     state = SystemState.initial(0.0)
     now = 0.0
     buffer: List[str] = []
@@ -55,7 +56,7 @@ def main() -> None:
     print("=" * 60)
     print("ARCTL in inference loop (synthetic token stream)")
     print("=" * 60)
-    
+
     diverse = "the quick brown fox jumps over the lazy dog ".split()
     repetitive = ["token"] * 200
     stream = (diverse * 10) + repetitive
@@ -68,14 +69,18 @@ def main() -> None:
     for i, (state, temp) in enumerate(arctl_loop(stream, time_step=0.1)):
         step_count = i
         if i <= 15 or state.mode.value != "STD" or i % 20 == 0:
-            print(f"  {i:4} | {state.mode.value:8} | {state.energy:6} | {temp:.3f} | {state.s_repetition:.3f}")
+            print(
+                f"  {i:4} | {state.mode.value:8} | {state.energy:6} | {temp:.3f} | {state.s_repetition:.3f}"
+            )
         if state.mode.value == "FBK":
             print("  ... (FALLBACK reached)")
             break
-    
+
     if step_count > 20 and state.mode.value != "FBK":
         print("  ...")
-        print(f"  {step_count:4} | {state.mode.value:8} | {state.energy:6} | {temp:.3f} | {state.s_repetition:.3f}")
+        print(
+            f"  {step_count:4} | {state.mode.value:8} | {state.energy:6} | {temp:.3f} | {state.s_repetition:.3f}"
+        )
 
     print("\nUse this pattern to plug arctl into your inference:")
     print("  for state, temperature in arctl_loop(my_token_iterator, cfg):")

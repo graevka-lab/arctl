@@ -11,8 +11,8 @@ COGNITIVE_MODES = {
             "Maintain strict logical structure in all responses",
             "Avoid speculation, assumptions, or unverified claims",
             "Use precise technical language appropriate to the domain",
-            "If uncertain, explicitly state limitations of knowledge"
-        ]
+            "If uncertain, explicitly state limitations of knowledge",
+        ],
     },
     "joy": {
         "name": "Creative Exploration",
@@ -21,8 +21,8 @@ COGNITIVE_MODES = {
             "Use vivid metaphors and analogies to explain concepts",
             "Explore multiple perspectives and possibilities",
             "Maintain an engaging and playful tone where appropriate",
-            "Prioritize originality over strict convention"
-        ]
+            "Prioritize originality over strict convention",
+        ],
     },
     "vigilance": {
         "name": "Critical Vigilance",
@@ -31,8 +31,8 @@ COGNITIVE_MODES = {
             "Verify all assumptions against known facts and evidence",
             "Maintain conservative conclusions with clear uncertainty bounds",
             "Explicitly flag speculative or unverified statements",
-            "Prioritize safety and reliability over novelty"
-        ]
+            "Prioritize safety and reliability over novelty",
+        ],
     },
     "wonder": {
         "name": "Philosophical Inquiry",
@@ -41,10 +41,11 @@ COGNITIVE_MODES = {
             "Explore paradoxes, contradictions, and boundary conditions",
             "Connect concepts to broader philosophical or systemic frameworks",
             "Maintain open-ended curiosity without premature closure",
-            "Acknowledge the limits of current understanding"
-        ]
-    }
+            "Acknowledge the limits of current understanding",
+        ],
+    },
 }
+
 
 def get_anchor(mode: str) -> str:
     if mode not in COGNITIVE_MODES:
@@ -53,15 +54,16 @@ def get_anchor(mode: str) -> str:
     config = COGNITIVE_MODES[mode]
     instructions = "\n".join(f"• {instr}" for instr in config["instructions"])
     return f"[COGNITIVE MODE: {config['name']}]\n{instructions}"
-def blend_anchors(mode_weights: dict[str, float], max_modes: int = 3) -> str:
 
+
+def blend_anchors(mode_weights: dict[str, float], max_modes: int = 3) -> str:
     """
     Creates a composite system prompt based on weighted modes.
     """
     sorted_modes = sorted(
         [(mode, weight) for mode, weight in mode_weights.items() if weight > 0.1],
         key=lambda x: x[1],
-        reverse=True
+        reverse=True,
     )
     selected_modes = sorted_modes[:max_modes]
 

@@ -19,7 +19,9 @@ class LexicalMetrics:
         if len(recent) < ngram_size:
             rep_score = 0.0
         else:
-            ngrams = [tuple(recent[i:i+ngram_size]) for i in range(len(recent)-ngram_size+1)]
+            ngrams = [
+                tuple(recent[i : i + ngram_size]) for i in range(len(recent) - ngram_size + 1)
+            ]
             unique = len(set(ngrams))
             total = len(ngrams)
             rep_score = 1.0 - (unique / total) if total > 0 else 0.0
@@ -29,8 +31,4 @@ class LexicalMetrics:
         diversity = vocab_size / len(recent) if recent else 1.0
         ent_score = min(1.0, max(0.0, diversity * 1.5))
 
-        return RawMetrics(
-            entropy=ent_score,
-            divergence=0.0,
-            repetition=rep_score
-        )
+        return RawMetrics(entropy=ent_score, divergence=0.0, repetition=rep_score)

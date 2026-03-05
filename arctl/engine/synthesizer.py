@@ -10,8 +10,9 @@ from arctl.core.profiles import get_profile
 
 class ModelInterface(Protocol):
     """Protocol that any LLM wrapper must implement."""
-    def generate(self, prompt: str) -> str:
-        ...
+
+    def generate(self, prompt: str) -> str: ...
+
 
 class ResonanceSynthesizer:
     def __init__(self, model_interface: ModelInterface):
@@ -27,11 +28,7 @@ class ResonanceSynthesizer:
         full_prompt = f"{anchor}\n\nUSER QUERY:\n{prompt}" if anchor else prompt
         primary_response = self.model.generate(full_prompt)
 
-        return {
-            "response": primary_response,
-            "profile": profile,
-            "anchor_used": bool(anchor)
-        }
+        return {"response": primary_response, "profile": profile, "anchor_used": bool(anchor)}
 
     def multi_synthesize(self, prompt: str, domain: str, phase: str = "analyze") -> dict[str, Any]:
         """
@@ -47,8 +44,4 @@ class ResonanceSynthesizer:
             test_prompt = f"{anchor}\n\nUSER QUERY:\n{prompt}" if anchor else prompt
             responses[mode] = self.model.generate(test_prompt)
 
-        return {
-            "responses": responses,
-            "domain": domain,
-            "phase": phase
-        }
+        return {"responses": responses, "domain": domain, "phase": phase}

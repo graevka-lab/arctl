@@ -23,6 +23,7 @@ from arctl.verification.metrics import ResonanceVerifier
 @dataclass
 class BenchmarkResult:
     """Result of a benchmark run"""
+
     name: str
     iterations: int
     total_time_s: float
@@ -45,10 +46,7 @@ class Benchmarker:
 
     @staticmethod
     def benchmark(
-        name: str,
-        func: Callable,
-        iterations: int = 1000,
-        warmup: bool = True
+        name: str, func: Callable, iterations: int = 1000, warmup: bool = True
     ) -> BenchmarkResult:
         """
         Run a benchmark on a function.
@@ -94,13 +92,14 @@ class Benchmarker:
             ops_per_sec=ops_per_sec,
             min_time_ns=min_ns,
             max_time_ns=max_ns,
-            avg_time_ns=avg_ns
+            avg_time_ns=avg_ns,
         )
 
 
 # ============================================================================
 # BENCHMARKS
 # ============================================================================
+
 
 def benchmark_single_step():
     """Benchmark: Single step() execution"""
@@ -136,10 +135,7 @@ def benchmark_state_machine_cycle():
 def benchmark_fallback_stability():
     """Benchmark: Verify FALLBACK doesn't regress performance"""
     cfg = ControllerConfig()
-    fallback_state = SystemState.initial(0.0)._replace(
-        mode=OperationalMode.FALLBACK,
-        energy=0
-    )
+    fallback_state = SystemState.initial(0.0)._replace(mode=OperationalMode.FALLBACK, energy=0)
     metrics = RawMetrics(entropy=0.5, divergence=0.0, repetition=0.5)
 
     def func():
@@ -178,7 +174,7 @@ def benchmark_resonance_verification():
         "calm": "This is a calm response about the topic.",
         "joy": "This is a joyful response about the topic!",
         "vigilance": "This is a critical response about the topic.",
-        "wonder": "This is a philosophical response about the topic?"
+        "wonder": "This is a philosophical response about the topic?",
     }
 
     def func():
@@ -230,6 +226,7 @@ def benchmark_time_state_transitions():
 
 def benchmark_config_construction():
     """Benchmark: Configuration object creation"""
+
     def func():
         ControllerConfig()
 
@@ -242,9 +239,7 @@ def benchmark_state_copy_operations():
 
     def func():
         return state._replace(
-            energy=7,
-            mode=OperationalMode.EMERGENCY,
-            active_config=state.active_config
+            energy=7, mode=OperationalMode.EMERGENCY, active_config=state.active_config
         )
 
     return Benchmarker.benchmark("State._replace() (copy on write)", func, iterations=100000)
@@ -253,6 +248,7 @@ def benchmark_state_copy_operations():
 # ============================================================================
 # MEMORY BENCHMARKS
 # ============================================================================
+
 
 def benchmark_memory_usage():
     """Benchmark: Memory usage of core objects"""
@@ -278,12 +274,13 @@ def benchmark_memory_usage():
     # Array of states (1000 steps)
     states = [SystemState.initial(0.0) for _ in range(1000)]
     states_memory = sum(sys.getsizeof(s) for s in states)
-    print(f"\n1000 states total:       {states_memory:>10} bytes ({states_memory/1024:.2f} KB)")
+    print(f"\n1000 states total:       {states_memory:>10} bytes ({states_memory / 1024:.2f} KB)")
 
 
 # ============================================================================
 # SCALING TESTS
 # ============================================================================
+
 
 def benchmark_scaling():
     """Test how performance scales with number of steps"""
@@ -297,6 +294,7 @@ def benchmark_scaling():
     step_counts = [10, 100, 1000, 10000]
 
     for num_steps in step_counts:
+
         def func(n=num_steps):
             s = SystemState.initial(0.0)  # Fresh state for each test
             for _ in range(n):
@@ -306,7 +304,7 @@ def benchmark_scaling():
             f"Execute {num_steps} steps",
             func,
             iterations=max(1, 1000 // (num_steps // 10)),
-            warmup=False
+            warmup=False,
         )
         print(result)
 
@@ -314,6 +312,7 @@ def benchmark_scaling():
 # ============================================================================
 # MAIN BENCHMARK SUITE
 # ============================================================================
+
 
 def run_all_benchmarks():
     """Run complete benchmark suite"""
@@ -369,8 +368,10 @@ def run_all_benchmarks():
 
         # Throughput analysis
         best_throughput = max(results, key=lambda r: r.ops_per_sec)
-        print(f"\nBest throughput: {best_throughput.name:<35} {best_throughput.ops_per_sec:>10.0f} ops/s")
+        print(
+            f"\nBest throughput: {best_throughput.name:<35} {best_throughput.ops_per_sec:>10.0f} ops/s"
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     run_all_benchmarks()

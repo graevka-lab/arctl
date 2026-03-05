@@ -36,6 +36,7 @@ LAYERS = ("YEARS", "MONTHS", "WEEKS", "DAYS", "HOURS", "MINUTES", "SECONDS", "MI
 @dataclass(frozen=True)
 class TimeLayers:
     """Decomposition of a timestamp into 8 layers (years down to milliseconds)."""
+
     years: int
     months: int
     weeks: int
@@ -77,6 +78,7 @@ def time_to_layers(ts: float) -> TimeLayers:
 
 class TemporalCoordinateState(Enum):
     """State of a time coordinate relative to the cursor (NOW)."""
+
     FROZEN_STATE = "READ_ONLY"
     PROBABILISTIC_FIELD = "READ_WRITE"
 
@@ -122,7 +124,9 @@ class Chronos:
             return state, ""
 
         cursor_layers = time_to_layers(current_ts)
-        current_date = datetime.fromtimestamp(current_ts, tz=timezone.utc).strftime("%Y-%m-%d %H:%M")
+        current_date = datetime.fromtimestamp(current_ts, tz=timezone.utc).strftime(
+            "%Y-%m-%d %H:%M"
+        )
         ago = _format_duration_ago(delta)
 
         note = (

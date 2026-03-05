@@ -8,10 +8,16 @@ from typing import ClassVar
 
 class UncertaintyScorer:
     MARKERS: ClassVar[dict[str, float]] = {
-        "maybe": 0.2, "possibly": 0.2, "perhaps": 0.2,
-        "not sure": 0.5, "unclear": 0.4,
-        "i think": 0.3, "it seems": 0.3,
-        "as an ai": 0.9, "i cannot": 0.9, "sorry": 0.8
+        "maybe": 0.2,
+        "possibly": 0.2,
+        "perhaps": 0.2,
+        "not sure": 0.5,
+        "unclear": 0.4,
+        "i think": 0.3,
+        "it seems": 0.3,
+        "as an ai": 0.9,
+        "i cannot": 0.9,
+        "sorry": 0.8,
     }
 
     @staticmethod

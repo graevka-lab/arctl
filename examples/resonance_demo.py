@@ -26,6 +26,7 @@ class MockModel:
     A mock LLM for demonstration purposes.
     Replace this with your actual API wrapper (OpenAI, Anthropic, Local).
     """
+
     def generate(self, prompt: str) -> str:
         # Simulating model responses based on the injected anchor
         if "Analytical Clarity" in prompt:
@@ -72,9 +73,10 @@ if __name__ == "__main__":
         main()
     except ImportError as e:
         print(f"❌ Import Error: {e}")
-        print("Make sure all dependencies are installed: pip install sentence-transformers numpy matplotlib")
+        print(
+            "Make sure all dependencies are installed: pip install sentence-transformers numpy matplotlib"
+        )
         exit(1)
     except Exception as e:
         print(f"❌ Error: {e}")
         exit(1)
-
