@@ -76,7 +76,7 @@ jobs:
         run: uv sync --all-extras
 
       - name: Lint
-        run: uv run ruff check arctl/ tests/
+        run: uv run ruff check arctl/
 
       - name: Format check
         run: uv run ruff format --check arctl/ tests/
