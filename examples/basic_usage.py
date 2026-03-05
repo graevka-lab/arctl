@@ -9,6 +9,10 @@ Run with: python examples/basic_usage.py
 
 import os
 import sys
+from dataclasses import replace
+
+from arctl.core.kernel import ControllerConfig, SystemState, step
+from arctl.core.states import RawMetrics
 
 # Path hack for running from examples/
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -16,13 +20,8 @@ project_root = os.path.dirname(current_dir)
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from dataclasses import replace
 
-from arctl.core.kernel import ControllerConfig, SystemState, step
-from arctl.core.states import RawMetrics
-
-
-def main():
+def main() -> None:
     print("=" * 70)
     print("ARCTL: Basic Usage Example")
     print("=" * 70)
@@ -63,7 +62,8 @@ def main():
     state = step(high_rep_metrics, state, current_time, config)
     print(f"  Mode changed to: {state.mode.value}")
     print(f"  Energy cost:     {config.policy.emergency_cost} (now {state.energy})")
-    print(f"  Temperature:     {state.active_config.temperature} (was 0.7)")
+    temp = state.active_config.temperature if state.active_config else 0.7
+    print(f"  Temperature:     {temp} (was 0.7)")
     print()
 
     # 4. Exit emergency through timeout
@@ -72,12 +72,13 @@ def main():
     print(f"  Waiting for deadlock_timeout ({config.time.deadlock_timeout}s)...")
 
     normal_metrics = RawMetrics(entropy=0.5, divergence=0.0, repetition=0.2)
-    for i in range(60):  # 60 * 0.1 = 6 seconds
+    for _ in range(60):  # 60 * 0.1 = 6 seconds
         current_time += 0.1
         state = step(normal_metrics, state, current_time, config)
 
     print(f"  Mode changed to: {state.mode.value}")
-    print(f"  Temperature:     {state.active_config.temperature} (recovery phase)")
+    temp = state.active_config.temperature if state.active_config else 0.7
+    print(f"  Temperature:     {temp} (recovery phase)")
     print()
 
     # 5. Exit cooldown
@@ -85,13 +86,14 @@ def main():
     print("-" * 70)
     print(f"  Waiting for cooldown_duration ({config.policy.cooldown_duration}s)...")
 
-    for i in range(30):  # 30 * 0.1 = 3 seconds
+    for _ in range(30):  # 30 * 0.1 = 3 seconds
         current_time += 0.1
         state = step(normal_metrics, state, current_time, config)
 
     print(f"  Mode changed to: {state.mode.value}")
     print(f"  Energy restored: {state.energy} (gained 1)")
-    print(f"  Temperature:     {state.active_config.temperature} (normal)")
+    temp = state.active_config.temperature if state.active_config else 0.7
+    print(f"  Temperature:     {temp} (normal)")
     print()
 
     # 6. Summary

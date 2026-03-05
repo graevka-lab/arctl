@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "arctl"
-version = "1.2.0"
+version = "1.3.1"
 description = "Hybrid Control Systems for LLMs (Deterministic + Semantic)"
 readme = "README.md"
 requires-python = ">=3.9"

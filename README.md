@@ -43,7 +43,7 @@ We cannot rebuild the dataset (yet). But we can control the **Resonance Profile*
 
 **Production-ready:** Hard Core (kernel + Chronos + Icarus). **Proof of concept:** Soft Core (resonance engine).
 
-`arctl` v1.2 implements a two-layer control system, **anchored by Project Icarus** and **Chronos T-SPIRAL_ALIGNMENT**:
+`arctl` v1.3.1 implements a two-layer control system, **anchored by Project Icarus** and **Chronos T-SPIRAL_ALIGNMENT**:
 
 ### 1. The Hard Core (Kernel)
 A deterministic Python state machine, now stabilized by the **Icarus Geometric Anchor**.

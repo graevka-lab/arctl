@@ -1,7 +1,7 @@
 # core v1.3 (Chronos T-SPIRAL + Energy-Conservative Reset + Icarus)
 
 """
-ARCTL Kernel v1.2
+ARCTL Kernel v1.3.1
 Integrated with the Icarus Stability Anchor.
 
 The Hard Core of the adaptive resonance control system.

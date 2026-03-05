@@ -3,8 +3,11 @@ Uncertainty Scorer v1.0
 Detects epistemic insecurity in model outputs.
 """
 
+from typing import ClassVar
+
+
 class UncertaintyScorer:
-    MARKERS = {
+    MARKERS: ClassVar[dict[str, float]] = {
         "maybe": 0.2, "possibly": 0.2, "perhaps": 0.2,
         "not sure": 0.5, "unclear": 0.4,
         "i think": 0.3, "it seems": 0.3,

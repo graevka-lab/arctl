@@ -218,7 +218,7 @@ class TestErrorRecovery(unittest.TestCase):
         metrics = RawMetrics(entropy=0.5, divergence=0.0, repetition=0.5)
 
         # Call step many times with tiny deltas
-        for i in range(1000):
+        for _ in range(1000):
             state = step(metrics, state, state.last_call_time + 0.0001, cfg)
 
         # System should handle this gracefully

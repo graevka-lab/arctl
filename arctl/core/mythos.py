@@ -37,5 +37,5 @@ A terminal state, from which none can outrun.
 [END_PROTOCOL]
 """
 
-def get_kernel():
+def get_kernel() -> str:
     return WARDEN_PROTOCOL

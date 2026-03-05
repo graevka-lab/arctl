@@ -3,14 +3,12 @@ Lexical Metrics v1.0
 Calculates repetition and entropy proxies from raw text.
 """
 
-from typing import List
-
 from ..core.states import RawMetrics
 
 
 class LexicalMetrics:
     @staticmethod
-    def calculate(history_tokens: List[str], window: int = 50) -> RawMetrics:
+    def calculate(history_tokens: list[str], window: int = 50) -> RawMetrics:
         if not history_tokens:
             return RawMetrics(0.5, 0.0, 0.0)
 

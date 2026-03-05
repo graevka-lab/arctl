@@ -13,7 +13,7 @@ import sys
 import unittest
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
 
 
 class TestRunner:
@@ -22,7 +22,7 @@ class TestRunner:
     def __init__(self, test_dir: Optional[Path] = None):
         """
         Initialize test runner.
-        
+
         Args:
             test_dir: Directory containing tests (defaults to current tests/)
         """
@@ -30,12 +30,12 @@ class TestRunner:
             test_dir = Path(__file__).parent
 
         self.test_dir = test_dir
-        self.results: Dict = {}
+        self.results: dict = {}
 
     def run_unit_tests(self) -> bool:
         """
         Run unit tests only.
-        
+
         Returns:
             True if all tests passed
         """
@@ -61,7 +61,7 @@ class TestRunner:
     def run_integration_tests(self) -> bool:
         """
         Run integration tests only.
-        
+
         Returns:
             True if all tests passed
         """
@@ -87,7 +87,7 @@ class TestRunner:
     def run_icarus_tests(self) -> bool:
         """
         Run Icarus stability tests only.
-        
+
         Returns:
             True if all tests passed
         """
@@ -113,7 +113,7 @@ class TestRunner:
     def run_all_tests(self) -> bool:
         """
         Run all unit, integration, and Icarus tests.
-        
+
         Returns:
             True if all tests passed
         """
@@ -156,12 +156,10 @@ class TestRunner:
         else:
             print("SOME TESTS FAILED")
 
-        return all_passed
-
     def export_results(self, filepath: Path) -> None:
         """
         Export results to JSON (for CI/CD integration).
-        
+
         Args:
             filepath: Path to save JSON results
         """
@@ -177,7 +175,7 @@ class TestRunner:
         print(f"\nResults exported to {filepath}")
 
 
-def main():
+def main() -> None:
     """Main entry point for test runner"""
     import argparse
 

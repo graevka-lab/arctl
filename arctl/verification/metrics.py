@@ -3,8 +3,10 @@ Resonance Verifier v1.0
 Measures semantic stability (invariance) across different cognitive modes.
 """
 
+from __future__ import annotations
+
 import re
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -15,7 +17,13 @@ try:
 except ImportError:
     HAS_TRANSFORMERS = False
 
+if TYPE_CHECKING:
+    from sentence_transformers import SentenceTransformer
+
+
 class ResonanceVerifier:
+    embedder: SentenceTransformer | None
+
     def __init__(self, model_name: str = 'all-MiniLM-L6-v2'):
         if HAS_TRANSFORMERS:
             self.embedder = SentenceTransformer(model_name)
@@ -23,7 +31,7 @@ class ResonanceVerifier:
             self.embedder = None
             print("[WARNING] sentence_transformers not installed. Verification disabled.")
 
-    def _split_into_claims(self, text: str) -> List[str]:
+    def _split_into_claims(self, text: str) -> list[str]:
         # Improved regex splitting to handle abbreviations better than simple dot split
         sentences = re.split(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s', text)
         return [s.strip() for s in sentences if len(s.strip()) > 10][:3]  # Top 3 substantial claims
@@ -49,7 +57,7 @@ class ResonanceVerifier:
 
         return float(np.mean(similarities)) if similarities else 0.0
 
-    def verify(self, responses: Dict[str, str]) -> Dict[str, Any]:
+    def verify(self, responses: dict[str, str]) -> dict[str, float | bool | list[str] | str]:
         """Verify semantic stability across different response modes."""
         if not self.embedder or len(responses) < 2:
             return {

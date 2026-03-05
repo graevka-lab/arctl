@@ -2,12 +2,7 @@
 Resonance Synthesizer with Multi-Pass Generation capability.
 """
 
-from typing import Any, Dict
-
-try:
-    from typing import Protocol
-except ImportError:
-    from typing_extensions import Protocol
+from typing import Any, Protocol
 
 from arctl.core.anchors import blend_anchors
 from arctl.core.profiles import get_profile
@@ -22,7 +17,7 @@ class ResonanceSynthesizer:
     def __init__(self, model_interface: ModelInterface):
         self.model = model_interface
 
-    def synthesize(self, prompt: str, domain: str, phase: str = "analyze") -> Dict[str, Any]:
+    def synthesize(self, prompt: str, domain: str, phase: str = "analyze") -> dict[str, Any]:
         """
         Single-pass generation using a blended profile.
         Efficient for lower-end hardware.
@@ -38,7 +33,7 @@ class ResonanceSynthesizer:
             "anchor_used": bool(anchor)
         }
 
-    def multi_synthesize(self, prompt: str, domain: str, phase: str = "analyze") -> Dict[str, Any]:
+    def multi_synthesize(self, prompt: str, domain: str, phase: str = "analyze") -> dict[str, Any]:
         """
         Multi-pass generation for high-fidelity resonance verification.
         Requires more compute.

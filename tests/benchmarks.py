@@ -12,7 +12,7 @@ import gc
 import sys
 import time
 from dataclasses import dataclass
-from typing import Callable, List
+from typing import Callable
 
 from arctl.core.kernel import ControllerConfig, SystemState, step
 from arctl.core.states import OperationalMode, RawMetrics
@@ -52,13 +52,11 @@ class Benchmarker:
     ) -> BenchmarkResult:
         """
         Run a benchmark on a function.
-        
         Args:
             name: Name for the benchmark
             func: Function to benchmark (should return nothing)
             iterations: Number of times to run
             warmup: Run 10 iterations first for JIT/caching
-        
         Returns:
             BenchmarkResult with timing information
         """
@@ -243,7 +241,7 @@ def benchmark_state_copy_operations():
     state = SystemState.initial(0.0)
 
     def func():
-        new_state = state._replace(
+        return state._replace(
             energy=7,
             mode=OperationalMode.EMERGENCY,
             active_config=state.active_config
@@ -278,7 +276,7 @@ def benchmark_memory_usage():
     print(f"RawMetrics size:         {metrics_size:>10} bytes")
 
     # Array of states (1000 steps)
-    states = [state for _ in range(1000)]
+    states = [SystemState.initial(0.0) for _ in range(1000)]
     states_memory = sum(sys.getsizeof(s) for s in states)
     print(f"\n1000 states total:       {states_memory:>10} bytes ({states_memory/1024:.2f} KB)")
 
@@ -294,16 +292,15 @@ def benchmark_scaling():
     print("=" * 80)
 
     cfg = ControllerConfig()
-    state = SystemState.initial(0.0)
     metrics = RawMetrics(entropy=0.5, divergence=0.0, repetition=0.3)
 
     step_counts = [10, 100, 1000, 10000]
 
     for num_steps in step_counts:
-        def func():
-            s = state
-            for i in range(num_steps):
-                s = step(metrics, s, float(i), cfg)
+        def func(n=num_steps):
+            s = SystemState.initial(0.0)  # Fresh state for each test
+            for _ in range(n):
+                s = step(metrics, s, float(_), cfg)
 
         result = Benchmarker.benchmark(
             f"Execute {num_steps} steps",
@@ -326,7 +323,7 @@ def run_all_benchmarks():
     print(f"{'Benchmark':<50} | {'Throughput':<12} | {'Time (ns)':<10} | {'Range':<20}")
     print("-" * 80)
 
-    results: List[BenchmarkResult] = []
+    results = []
 
     # Core benchmarks
     results.append(benchmark_single_step())

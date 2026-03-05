@@ -1,29 +1,32 @@
 """
 Integration example: use arctl inside an inference loop.
-
 Shows how to feed token streams into the kernel and use the returned
 temperature/config. Uses synthetic tokens here; replace the token source
 with your model's generate() or API to hook arctl into real inference.
-
 Run from project root: python examples/arctl_in_inference_loop.py
 """
-
 import os
 import sys
 from dataclasses import replace
+from typing import Generator, Tuple, List, Optional
+from arctl.core.kernel import ControllerConfig, SystemState, step
+from arctl.verification.lexical import LexicalMetrics
 
+# Path hack for running from examples/
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-from arctl.core.kernel import ControllerConfig, SystemState, step
-from arctl.verification.lexical import LexicalMetrics
 
-
-def arctl_loop(token_stream, cfg=None, window=50, time_step=0.1):
+def arctl_loop(
+    token_stream: List[str],
+    cfg: Optional[ControllerConfig] = None,
+    window: int = 50,
+    time_step: float = 0.1,
+) -> Generator[Tuple[SystemState, float], None, None]:
     """
     Run arctl on a stream of tokens. Yields (state, temperature) each step.
-
+    
     token_stream: list of token strings (or iterator); we consume in chunks.
     cfg: ControllerConfig (default: fast smoothing for demo).
     window: tokens per step for LexicalMetrics.
@@ -34,7 +37,7 @@ def arctl_loop(token_stream, cfg=None, window=50, time_step=0.1):
     )
     state = SystemState.initial(0.0)
     now = 0.0
-    buffer = []
+    buffer: List[str] = []
 
     for t in token_stream:
         buffer.append(t)
@@ -44,16 +47,16 @@ def arctl_loop(token_stream, cfg=None, window=50, time_step=0.1):
         raw = LexicalMetrics.calculate(recent, window=window)
         now += time_step
         state = step(raw, state, now, cfg)
-        yield state, state.active_config.temperature
+        temp = state.active_config.temperature if state.active_config else 0.7
+        yield state, temp
 
 
-def main():
+def main() -> None:
     print("=" * 60)
     print("ARCTL in inference loop (synthetic token stream)")
     print("=" * 60)
-
-    # Synthetic stream: first diverse, then repetitive (simulating a loop)
-    diverse = "the quick brown fox jumps over the lazy dog".split()
+    
+    diverse = "the quick brown fox jumps over the lazy dog ".split()
     repetitive = ["token"] * 200
     stream = (diverse * 10) + repetitive
 
@@ -69,6 +72,7 @@ def main():
         if state.mode.value == "FBK":
             print("  ... (FALLBACK reached)")
             break
+    
     if step_count > 20 and state.mode.value != "FBK":
         print("  ...")
         print(f"  {step_count:4} | {state.mode.value:8} | {state.energy:6} | {temp:.3f} | {state.s_repetition:.3f}")

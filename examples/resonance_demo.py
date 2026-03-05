@@ -4,10 +4,12 @@ Shows how the system extracts invariant truth across different cognitive modes.
 """
 
 import sys
-
-# --- PATH SETUP (Robust) ---
 from pathlib import Path
 
+from arctl.engine.synthesizer import ResonanceSynthesizer
+from arctl.verification.metrics import ResonanceVerifier
+
+# --- PATH SETUP (Robust) ---
 # Get absolute path to the examples directory
 current_dir = Path(__file__).parent
 # Navigate up one level to the project root
@@ -18,14 +20,10 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 # --------------------------
 
-# Now Python can see the 'arctl' package
-from arctl.engine.synthesizer import ResonanceSynthesizer
-from arctl.verification.metrics import ResonanceVerifier
-
 
 class MockModel:
     """
-    A mock LLM for demonstration purposes. 
+    A mock LLM for demonstration purposes.
     Replace this with your actual API wrapper (OpenAI, Anthropic, Local).
     """
     def generate(self, prompt: str) -> str:
@@ -39,7 +37,8 @@ class MockModel:
         else:
             return "PWM varies pulse width to control power."
 
-def main():
+
+def main() -> None:
     print("🚀 Initializing Resonance Engine...")
 
     # 1. Setup
@@ -67,6 +66,7 @@ def main():
     for mode, response in multi_result["responses"].items():
         print(f"\n[{mode.upper()}]: {response}")
 
+
 if __name__ == "__main__":
     try:
         main()
@@ -78,5 +78,3 @@ if __name__ == "__main__":
         print(f"❌ Error: {e}")
         exit(1)
 
-if __name__ == "__main__":
-    main()
