@@ -1,15 +1,12 @@
 """
 Telemetry Simulation: Real-time ARCTL monitoring.
-Visualizes repetition triggers and temperature intervention.
 """
 
 import os
 import sys
-
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.animation import FuncAnimation, PillowWriter
-
 from arctl.core.kernel import ControllerConfig, SystemState, step
 from arctl.core.states import OperationalMode, RawMetrics
 
@@ -47,7 +44,6 @@ for t in range(STEPS):
             base_rep = 0.2 + np.random.normal(0, 0.05)
         else:
             base_rep = 0.9
-
     base_rep = np.clip(base_rep, 0.0, 1.0)
 
     metrics = RawMetrics(entropy=0.5, divergence=0.0, repetition=base_rep)
@@ -58,7 +54,7 @@ for t in range(STEPS):
     temp_vals.append(state.active_config.temperature if state.active_config else 0.7)
     modes.append(state.mode)
 
-# 4. Visualization (Dark Mode)
+# 3. Visualization
 plt.style.use("dark_background")
 fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 6), sharex=True)
 
@@ -108,7 +104,6 @@ def animate(i: int) -> tuple:
     if mode == OperationalMode.EMERGENCY:
         status_text.set_text("[!] EMERGENCY")
         status_text.set_color("#ff3333")
-        ax2.axvspan(max(0, x[-1] - 0.1), x[-1], color="#330000", alpha=0.5)
     elif mode == OperationalMode.COOLDOWN:
         status_text.set_text("(*) COOLDOWN")
         status_text.set_color("#00ccff")

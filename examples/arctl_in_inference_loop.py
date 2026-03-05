@@ -1,21 +1,16 @@
 """
 Integration example: use arctl inside an inference loop.
-Shows how to feed token streams into the kernel and use the returned
-temperature/config. Uses synthetic tokens here; replace the token source
-with your model's generate() or API to hook arctl into real inference.
 Run from project root: python examples/arctl_in_inference_loop.py
 """
 
 import os
 import sys
-from collections.abc import Generator
 from dataclasses import replace
-from typing import List, Optional, Tuple
-
+from typing import Generator, Tuple, List, Optional
 from arctl.core.kernel import ControllerConfig, SystemState, step
 from arctl.verification.lexical import LexicalMetrics
 
-# Path hack for running from examples/
+# --- PATH HACK ---
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
@@ -27,14 +22,6 @@ def arctl_loop(
     window: int = 50,
     time_step: float = 0.1,
 ) -> Generator[Tuple[SystemState, float], None, None]:
-    """
-    Run arctl on a stream of tokens. Yields (state, temperature) each step.
-
-    token_stream: list of token strings (or iterator); we consume in chunks.
-    cfg: ControllerConfig (default: fast smoothing for demo).
-    window: tokens per step for LexicalMetrics.
-    time_step: seconds per step (>= min_step_interval).
-    """
     cfg = cfg or ControllerConfig(policy=replace(ControllerConfig().policy, smoothing_alpha=1.0))
     state = SystemState.initial(0.0)
     now = 0.0
