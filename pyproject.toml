@@ -24,9 +24,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-verification = ["sentence-transformers>=2.2.0", "torch>=2.0.0"]
+verification = ["sentence-transformers>=5.1.2", "torch>=2.0.0"]
 viz = ["matplotlib>=3.5.0"]
-full = ["sentence-transformers>=2.2.0", "matplotlib>=3.5.0", "torch>=2.0.0"]
+full = ["sentence-transformers>=5.1.2", "matplotlib>=3.5.0", "torch>=2.0.0"]
 
 [project.urls]
 Homepage = "https://github.com/graevka-lab/arctl"
